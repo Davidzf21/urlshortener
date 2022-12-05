@@ -57,6 +57,6 @@ class ApplicationConfiguration(
     fun infoClientUserCase() = InfoClientUserCaseImpl(clickRepositoryService())
 
     @Bean
-    fun createUrlsFromCsvUseCase() = CreateUrlsFromCsvUseCaseImpl(fileStorage, createShortUrlUseCase())
+    fun createUrlsFromCsvUseCase() = CreateUrlsFromCsvUseCaseImpl(createShortUrlUseCase())
 
 }

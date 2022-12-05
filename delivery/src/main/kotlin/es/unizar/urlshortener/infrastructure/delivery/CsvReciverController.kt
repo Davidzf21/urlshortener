@@ -6,6 +6,7 @@ import es.unizar.urlshortener.core.ValidateUrlState
 import es.unizar.urlshortener.core.usecases.*
 import org.apache.tomcat.util.http.fileupload.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.core.io.Resource
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
+import java.io.File
+import java.lang.Thread.sleep
 import java.util.*
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -58,29 +61,18 @@ class CsvReciverControllerImpl(
                            response: HttpServletResponse) {
 
         createUrlFromCsvUseCase.create(file, request.remoteAddr).let {
-            val newLines = ArrayList<String>()
-            for(i in 0 until it.urls.size){
-                val originalURL = it.urls[i].redirection.target
-                val shortURL = "http://localhost:8080/" + it.urls[i].hash
-                var error = ""
-                if (it.urls[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE)){
-                    error = "ERROR: VALIDATION_FAIL_NOT_REACHABLE"
-                } else if (it.urls[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_NOT_SAFE)){
-                    error = "ERROR: VALIDATION_FAIL_NOT_SAFE"
-                } else if (it.urls[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_BLOCK)){
-                    error = "ERROR: VALIDATION_FAIL_BLOCK"
-                }
-                newLines.add("$originalURL;$shortURL;$error")
-            }
-            fileStorage.overWriteFile(it.filename, newLines)
-            val fileGenerated = fileStorage.loadFile(it.filename)
-            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"URLS.csv\"")
+            val nuevoNombre = "${fileStorage.generateName()}.csv"
+            val fileGenerated = fileStorage.newFile(nuevoNombre)
+            var clientFileName = file.originalFilename?.split(".")?.get(0)!!
+            fileStorage.overWriteFile(nuevoNombre, it)
+            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""+
+                    clientFileName +"_check.csv\"")
             response.contentType = "text/csv"
             response.status = HttpStatus.CREATED.value()
             IOUtils.copy(fileGenerated.inputStream, response.outputStream)
             response.outputStream.close()
             fileGenerated.inputStream.close()
-            fileStorage.deleteFile(it.filename)
+            fileStorage.deleteFile(nuevoNombre)
         }
 
     }

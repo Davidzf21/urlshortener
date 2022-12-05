@@ -8,34 +8,33 @@ import org.springframework.web.multipart.MultipartFile
  * and creates a new file with the short URL or the error occurred.
  */
 interface CreateUrlsFromCsvUseCase {
-    fun create(file: MultipartFile, remoteAddr: String): ShortUrlFile
+    fun create(file: MultipartFile, remoteAddr: String): ArrayList<String>
 }
 
 /**
  * Implementation of [CreateUrlsFromCsvUseCase].
  */
 class CreateUrlsFromCsvUseCaseImpl(
-        private var fileStorage: FileStore,
         private val createShortUrlUseCase: CreateShortUrlUseCase
 ) : CreateUrlsFromCsvUseCase {
-    override fun create(file: MultipartFile, remoteAddr: String): ShortUrlFile {
+    override fun create(file: MultipartFile, remoteAddr: String): ArrayList<String> {
         if(checkTypeFile(file)){
             throw InvalidFileType()
         }
         val shortUrlsFile = ArrayList<ShortUrl>()
-        val nuevoNombre = "${fileStorage.generateName()}.csv"
-        fileStorage.store(file, nuevoNombre)
-        val lineas = fileStorage.readLines(nuevoNombre)
-        for(line in lineas){
-            val shortUrl = createShortUrlUseCase.create(
-                    url = line,
-                    data = ShortUrlProperties(
-                            ip = remoteAddr,
-                    )
-            )
-            shortUrlsFile.add(shortUrl)
+        val content = String(file.bytes).split("\r\n")
+        for(line in content){
+            if(line.isNotEmpty()) {
+                val shortUrl = createShortUrlUseCase.create(
+                        url = line,
+                        data = ShortUrlProperties(
+                                ip = remoteAddr,
+                        )
+                )
+                shortUrlsFile.add(shortUrl)
+            }
         }
-        return ShortUrlFile(nuevoNombre, shortUrlsFile)
+        return makeList(shortUrlsFile)
     }
 
     private fun checkTypeFile(file: MultipartFile): Boolean {
@@ -44,6 +43,24 @@ class CreateUrlsFromCsvUseCaseImpl(
             return true
         }
         return false
+    }
+
+    private fun makeList(it: ArrayList<ShortUrl>): ArrayList<String> {
+        val newLines = ArrayList<String>()
+        for(i in 0 until it.size){
+            val originalURL = it[i].redirection.target
+            val shortURL = "http://localhost:8080/" + it[i].hash
+            var error = "OK"
+            if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE)){
+                error = "ERROR: VALIDATION_FAIL_NOT_REACHABLE"
+            } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_NOT_SAFE)){
+                error = "ERROR: VALIDATION_FAIL_NOT_SAFE"
+            } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_BLOCK)){
+                error = "ERROR: VALIDATION_FAIL_BLOCK"
+            }
+            newLines.add("$originalURL;$shortURL;$error")
+        }
+        return newLines
     }
 
 }
