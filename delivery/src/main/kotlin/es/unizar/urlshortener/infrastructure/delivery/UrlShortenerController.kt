@@ -18,7 +18,6 @@ import org.springframework.web.client.RestTemplate
 import java.net.URI
 import java.util.*
 import javax.servlet.http.HttpServletRequest
-import kotlin.collections.ArrayList
 
 
 /**
@@ -81,10 +80,12 @@ class UrlShortenerControllerImpl(
     @GetMapping("/{id:(?!api|index).*}")
     override fun redirectTo(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<Void> =
         redirectUseCase.redirectTo(id).let {
+            //val ua = UserAgent
             if (it.mode == 403) throw RedirectionNotSafeOrBlock(id)
             if (it.mode == 400) throw RedirectionNotReachable(id)
-            val requestBrowser = logClickUseCase.getBrowser(request)
-            val requestPlatform = logClickUseCase.getPlataform(request)
+            val browserDetails = request.getHeader("User-Agent")
+            val requestBrowser = logClickUseCase.getBrowser(browserDetails)
+            val requestPlatform = logClickUseCase.getPlataform(browserDetails)
             logClickUseCase.logClick(id, ClickProperties(ip = request.remoteAddr, browser = requestBrowser,
                     platform = requestPlatform))
             val h = HttpHeaders()
@@ -106,17 +107,24 @@ class UrlShortenerControllerImpl(
             h.location = url
             var errores = ""
             var state = HttpStatus.CREATED
-            if (it.validation == ValidateUrlState.VALIDATION_FAIL_NOT_SAFE) {
-                errores = "URI de destino no es segura"
-                state = HttpStatus.BAD_REQUEST
-            }
-            if (it.validation == ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE) {
-                errores = "URI de destino no es alcanzable"
-                state = HttpStatus.BAD_REQUEST
-            }
-            if (it.validation == ValidateUrlState.VALIDATION_FAIL_BLOCK) {
-                errores = "URI de destino esta bloqueada"
-                state = HttpStatus.FORBIDDEN
+            when (it.validation) {
+                ValidateUrlState.VALIDATION_FAIL_NOT_SAFE -> {
+                    errores = "URI de destino no es segura"
+                    state = HttpStatus.BAD_REQUEST
+                }
+                ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE -> {
+                    errores = "URI de destino no es alcanzable"
+                    state = HttpStatus.BAD_REQUEST
+                }
+                ValidateUrlState.VALIDATION_FAIL_BLOCK_URL -> {
+                    errores = "URI de destino esta bloqueada"
+                    state = HttpStatus.FORBIDDEN
+                }
+                ValidateUrlState.VALIDATION_FAIL_BLOCK_IP -> {
+                    errores = "IP del creador esta bloqueada"
+                    state = HttpStatus.FORBIDDEN
+                }
+                else -> {}
             }
             val response = ShortUrlDataOut(
                 url = url,

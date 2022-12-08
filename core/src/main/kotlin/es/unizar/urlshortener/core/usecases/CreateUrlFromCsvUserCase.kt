@@ -23,18 +23,24 @@ class CreateUrlsFromCsvUseCaseImpl(
         }
         val shortUrlsFile = ArrayList<ShortUrl>()
         val content = String(file.bytes).split("\r\n")
+        var fall = false
         for(line in content){
             if(line.isNotEmpty()) {
-                val shortUrl = createShortUrlUseCase.create(
-                        url = line,
-                        data = ShortUrlProperties(
-                                ip = remoteAddr,
-                        )
-                )
-                shortUrlsFile.add(shortUrl)
+                if(!line.contains(";")) {
+                    val shortUrl = createShortUrlUseCase.create(
+                            url = line,
+                            data = ShortUrlProperties(
+                                    ip = remoteAddr,
+                            )
+                    )
+                    shortUrlsFile.add(shortUrl)
+                } else {
+                    fall = true
+                    break
+                }
             }
         }
-        return makeList(shortUrlsFile)
+        return makeList(shortUrlsFile, fall)
     }
 
     private fun checkTypeFile(file: MultipartFile): Boolean {
@@ -45,7 +51,7 @@ class CreateUrlsFromCsvUseCaseImpl(
         return false
     }
 
-    private fun makeList(it: ArrayList<ShortUrl>): ArrayList<String> {
+    private fun makeList(it: ArrayList<ShortUrl>, fall: Boolean): ArrayList<String> {
         val newLines = ArrayList<String>()
         for(i in 0 until it.size){
             val originalURL = it[i].redirection.target
@@ -59,6 +65,9 @@ class CreateUrlsFromCsvUseCaseImpl(
                 error = "ERROR: VALIDATION_FAIL_BLOCK"
             }
             newLines.add("$originalURL;$shortURL;$error")
+        }
+        if(fall){
+            newLines.add("FALLO DE FORMATO;NO SE HA PODIDO PROCESAR EL FICHERO")
         }
         return newLines
     }

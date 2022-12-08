@@ -1,8 +1,6 @@
 package es.unizar.urlshortener
 
-import es.unizar.urlshortener.core.ValidateUrlResponse
 import es.unizar.urlshortener.infrastructure.delivery.ShortUrlDataOut
-import org.apache.http.impl.client.HttpClientBuilder
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -13,22 +11,27 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.http.*
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.jdbc.JdbcTestUtils
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
-import java.io.File
-import java.io.IOException
+import org.springframework.web.context.WebApplicationContext
+import java.nio.file.Files
 import java.net.URI
 import java.nio.file.Paths
-import java.util.*
 
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 class HttpRequestTest {
     @LocalServerPort
     private val port = 0
+
+    @Autowired
+    private lateinit var webApplicationContext: WebApplicationContext
 
     @Autowired
     private lateinit var jdbcTemplate: JdbcTemplate
@@ -107,7 +110,6 @@ class HttpRequestTest {
 
     @Test
     fun `Test para comprobar la funcionalidad de Google Safe Browsing`() {
-        //val sUrl = shortUrl("https://testsafewsing.appspot.com/s/unwanted.html")
         val respHeaders = shortUrl("https://testsafebrowsing.appspot.com/s/malware.html")
         val target = respHeaders.headers.location
         require(target != null)
@@ -172,11 +174,71 @@ class HttpRequestTest {
     }
 
     @Test
-    fun `Test para comprobar la funcionalidad de CSV`() {
-        assertThat(2).isEqualTo(2) //Comp. de 403 FORBIDDEN
+    fun `Test para comprobar la funcionalidad de CSV --- Fichero que no es csv`() {
+        val sendFile = fileToSend("noCsv.txt")
+        val mock = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        mock.perform(
+                multipart("/api/bulk")
+                        .file(sendFile)).andExpect(MockMvcResultMatchers.status().isBadRequest)
     }
 
+    @Test
+    fun `Test para comprobar la funcionalidad de CSV --- Fichero csv vacio`() {
+        val sendFile = fileToSend("emptyCSV.csv")
+        val mock = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        mock.perform(
+                multipart("/api/bulk")
+                        .file(sendFile))
+                .andExpect(MockMvcResultMatchers.status().isCreated)
+                .andExpect(MockMvcResultMatchers.content().contentType("text/csv"))
+                .andExpect(MockMvcResultMatchers.content().bytes(fileToBytes("emptyCSV.csv")))
+    }
+
+    @Test
+    fun `Test para comprobar la funcionalidad de CSV --- Fichero csv formato no valido`() {
+        val sendFile = fileToSend("InvalidCSV.csv")
+        val mock = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val resp = mock.perform(
+                multipart("/api/bulk")
+                        .file(sendFile))
+                .andExpect(MockMvcResultMatchers.status().isCreated)
+                .andExpect(MockMvcResultMatchers.content().contentType("text/csv"))
+                .andReturn()
+        assertThat(resp.response.contentAsString.contains("FALLO DE FORMATO"))
+        assertThat(resp.response.getHeaderValue("Location").toString().isNotEmpty())
+    }
+
+    @Test
+    fun `Test para comprobar la funcionalidad de CSV --- Fichero csv formato valido`() {
+        val sendFile = fileToSend("ValidCSV.csv")
+        val mock = MockMvcBuilders.webAppContextSetup(webApplicationContext).build()
+        val resp = mock.perform(
+                multipart("/api/bulk")
+                        .file(sendFile))
+                .andExpect(MockMvcResultMatchers.status().isCreated)
+                .andExpect(MockMvcResultMatchers.content().contentType("text/csv"))
+                .andReturn()
+        assertThat(resp.response.getHeaderValue("Location").toString().isNotEmpty())
+
+        val a = resp.response.contentAsString
+        println(a)
+    }
+
+
     /*** ********************************************** ***/
+
+    // Create a new MockMultipartFile with the given content.
+    private fun fileToSend(name: String): MockMultipartFile {
+        val path = Paths.get("src/test/resources/$name")
+        val content = Files.readAllBytes(path)
+        return MockMultipartFile("file", name, "text/plain", content)
+    }
+
+    // File to a bytes
+    private fun fileToBytes(name: String): ByteArray {
+        val path = Paths.get("src/test/resources/$name")
+        return Files.readAllBytes(path)
+    }
 
 
     private fun shortUrl(url: String): ResponseEntity<ShortUrlDataOut> {

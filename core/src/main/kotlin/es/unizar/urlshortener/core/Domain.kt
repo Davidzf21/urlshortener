@@ -9,7 +9,8 @@ enum class ValidateUrlResponse {
     OK,
     NO_REACHABLE,
     UNSAFE,
-    BLOCK
+    BLOCK_URL,
+    BLOCK_IP
 }
 
 enum class ValidateUrlState {
@@ -17,7 +18,8 @@ enum class ValidateUrlState {
     VALIDATION_IN_PROGRESS,
     VALIDATION_FAIL_NOT_REACHABLE,
     VALIDATION_FAIL_NOT_SAFE,
-    VALIDATION_FAIL_BLOCK,
+    VALIDATION_FAIL_BLOCK_URL,
+    VALIDATION_FAIL_BLOCK_IP,
     VALIDATION_NOT_DONE
 }
 

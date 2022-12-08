@@ -36,7 +36,7 @@ interface CsvReciverController {
      *
      * **Note**: Delivery of use case [CreateShortUrlUseCase].
      */
-    fun processCsv(file: MultipartFile, uuid: String, request: HttpServletRequest,
+    fun processCsv(file: MultipartFile, request: HttpServletRequest,
                   response: HttpServletResponse)
 
 }
@@ -51,13 +51,11 @@ class CsvReciverControllerImpl(
 
     @GetMapping("/api/bulk")
     override fun uploadCsvPage(model: MutableMap<String, Any>): String {
-        model["uuid"] = UUID.randomUUID().toString()
         return "uploadPage"
     }
 
     @PostMapping("/api/bulk")
-    override fun processCsv(@RequestParam("file") file: MultipartFile,
-                           @RequestParam("uuid") uuid: String, request: HttpServletRequest,
+    override fun processCsv(@RequestParam("file") file: MultipartFile, request: HttpServletRequest,
                            response: HttpServletResponse) {
 
         createUrlFromCsvUseCase.create(file, request.remoteAddr).let {
@@ -72,7 +70,7 @@ class CsvReciverControllerImpl(
             IOUtils.copy(fileGenerated.inputStream, response.outputStream)
             response.outputStream.close()
             fileGenerated.inputStream.close()
-            fileStorage.deleteFile(nuevoNombre)
+            //fileStorage.deleteFile(nuevoNombre)
         }
 
     }

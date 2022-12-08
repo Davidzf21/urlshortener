@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
 import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import kotlinx.coroutines.*
+import org.springframework.web.servlet.function.ServerResponse.async
 import java.io.File
 import java.io.IOException
 import java.net.URI
@@ -20,10 +22,11 @@ import java.util.*
  */
 
 interface ValidateUrlUseCase {
-    fun ValidateURL(url: String): ValidateUrlResponse
-    fun ReachableURL(url: String): ValidateUrlResponse
-    fun SafeURL(url: String): ValidateUrlResponse
-    fun BlockURL(url: String): ValidateUrlResponse
+    suspend fun ValidateURL(url: String, ipRemote: String): ValidateUrlResponse
+    suspend fun ReachableURL(url: String): ValidateUrlResponse
+    suspend fun SafeURL(url: String): ValidateUrlResponse
+    suspend fun BlockURL(url: String): ValidateUrlResponse
+    suspend fun BlockIP(ipRemote: String): ValidateUrlResponse
 }
 
 /**
@@ -45,23 +48,21 @@ class ValidateUrlUseCaseImpl(
     lateinit var googleValue: String
 
     /*** Comprobacion en paralelo y con corutanas de que la URL es segura y alcanzable ***/
-    override fun ValidateURL(url: String): ValidateUrlResponse {
-        var response1 = ReachableURL(url)
-        var response2 = SafeURL(url)
-        var response3 = BlockURL(url)
-        if(response1.equals(ValidateUrlResponse.NO_REACHABLE)){
-            return response1
-        } else if (response2.equals(ValidateUrlResponse.UNSAFE)){
-            return response2
-        } else if(response3.equals(ValidateUrlResponse.BLOCK)){
-            return response3
-        } else {
-            return ValidateUrlResponse.OK
-        }
+    override suspend fun ValidateURL(url: String, ipRemote: String): ValidateUrlResponse = coroutineScope {
+        // Lanzamiento hilos ligeros
+        val respReachable = async { ReachableURL(url) }
+        val respSafe = async { SafeURL(url) }
+        val respBlockURL = async { BlockURL(url) }
+        val respBlockIP = async { BlockIP(ipRemote) }
+        // Respuesta hilos ligeros
+        if(respBlockURL.await() != ValidateUrlResponse.OK) respBlockURL.await()
+        else if (respBlockIP.await() != ValidateUrlResponse.OK) respBlockIP.await()
+        else if (respSafe.await() != ValidateUrlResponse.OK) respSafe.await()
+        else respReachable.await()
     }
 
     /*** Validacion de que la URL es alcanzable ***/
-    override fun ReachableURL(url: String): ValidateUrlResponse {
+    override suspend fun ReachableURL(url: String): ValidateUrlResponse {
         return try {
             var resp = restTemplate.getForEntity(url, String::class.java)
             if(resp.statusCode.is2xxSuccessful) {
@@ -75,7 +76,7 @@ class ValidateUrlUseCaseImpl(
     }
 
     /*** Validacion de que la URL es segura con Google Safe Browse ***/
-    override fun SafeURL(url: String): ValidateUrlResponse {
+    override suspend fun SafeURL(url: String): ValidateUrlResponse {
         val Request = ThreatMatchesFindRequestBody(
                 ClientInfo(googleClient, googleVersion),
                 ThreatInfo(
@@ -96,14 +97,31 @@ class ValidateUrlUseCaseImpl(
     }
 
     /*** Comprobar que la URL no esta en la lista de bloqueados ***/
-    override fun BlockURL(url: String): ValidateUrlResponse {
+    override suspend fun BlockURL(url: String): ValidateUrlResponse {
         val path = Paths.get("repositories/src/main/resources/BLOCK_URL.txt")
         try {
             val sc = Scanner(File(path.toString()))
             while (sc.hasNextLine()) {
                 val line = sc.nextLine()
-                if(line.equals(url)){
-                    return ValidateUrlResponse.BLOCK
+                if(url.contains(line)){
+                    return ValidateUrlResponse.BLOCK_URL
+                }
+            }
+        } catch (e: IOException) {
+            e.printStackTrace()
+        }
+        return ValidateUrlResponse.OK
+    }
+
+    /*** Comprobar que la IP del creador no esta en la lista de bloqueados ***/
+    override suspend fun BlockIP(ipRemote: String): ValidateUrlResponse {
+        val path = Paths.get("repositories/src/main/resources/BLOCK_IP.txt")
+        try {
+            val sc = Scanner(File(path.toString()))
+            while (sc.hasNextLine()) {
+                val line = sc.nextLine()
+                if(line.equals(ipRemote)){
+                    return ValidateUrlResponse.BLOCK_IP
                 }
             }
         } catch (e: IOException) {

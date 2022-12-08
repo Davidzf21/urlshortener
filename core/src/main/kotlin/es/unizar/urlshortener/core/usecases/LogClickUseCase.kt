@@ -13,8 +13,8 @@ import javax.servlet.http.HttpServletRequest
  */
 interface LogClickUseCase {
     fun logClick(key: String, data: ClickProperties)
-    fun getBrowser(request: HttpServletRequest): String
-    fun getPlataform(request: HttpServletRequest): String
+    fun getBrowser(browserDetails: String): String
+    fun getPlataform(browserDetails: String): String
 }
 
 /**
@@ -34,9 +34,8 @@ class LogClickUseCaseImpl(
     }
 
     /** Devuelve el nombre del navegador desde donde se hace la peticion ***/
-    override fun getBrowser(request: HttpServletRequest): String  {
+    override fun getBrowser(browserDetails: String): String  {
         // Reference: https://gist.github.com/c0rp-aubakirov/a4349cbd187b33138969
-        val browserDetails = request.getHeader("User-Agent")
         val user = browserDetails.lowercase(Locale.getDefault())
 
         var browser: String = ""
@@ -74,9 +73,9 @@ class LogClickUseCaseImpl(
     }
 
     /** Devuelve el nombre del SO desde donde se hace la peticion ***/
-    override fun getPlataform(request: HttpServletRequest): String {
+    override fun getPlataform(browserDetailsUperCase: String): String {
         // Reference: https://gist.github.com/c0rp-aubakirov/a4349cbd187b33138969
-        val browserDetails = request.getHeader("User-Agent").toString().lowercase();
+        val browserDetails = browserDetailsUperCase.lowercase();
         //=================OS=======================
         if (browserDetails.contains("windows")) {
             return "Windows";

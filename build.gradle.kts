@@ -104,7 +104,7 @@ project(":app") {
         "implementation"("org.springframework.boot:spring-boot-starter")
         "implementation"( "org.webjars:bootstrap:$bootstrapVersion")
         "implementation"("org.webjars:jquery:$jqueryVersion")
-
+        "implementation"("ru.chermenin:kotlin-user-agents:0.2.2")
         "runtimeOnly"("org.hsqldb:hsqldb")
 
         "testImplementation"("org.springframework.boot:spring-boot-starter-test")
@@ -114,4 +114,8 @@ project(":app") {
         "testImplementation"("com.fasterxml.jackson.module:jackson-module-kotlin")
         "testImplementation"("org.apache.httpcomponents:httpclient")
     }
+}
+
+repositories {
+    mavenCentral()
 }
