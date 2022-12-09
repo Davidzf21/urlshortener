@@ -61,8 +61,10 @@ class CreateUrlsFromCsvUseCaseImpl(
                 error = "ERROR: VALIDATION_FAIL_NOT_REACHABLE"
             } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_NOT_SAFE)){
                 error = "ERROR: VALIDATION_FAIL_NOT_SAFE"
-            } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_BLOCK)){
-                error = "ERROR: VALIDATION_FAIL_BLOCK"
+            } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_BLOCK_URL)){
+                error = "ERROR: VALIDATION_FAIL_BLOCK_URL"
+            } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_BLOCK_IP)){
+                error = "ERROR: VALIDATION_FAIL_BLOCK_IP"
             }
             newLines.add("$originalURL;$shortURL;$error")
         }

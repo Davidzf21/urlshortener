@@ -1,13 +1,15 @@
 package es.unizar.urlshortener.core.usecases
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import es.unizar.urlshortener.core.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity
-import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import kotlinx.coroutines.*
-import org.springframework.web.servlet.function.ServerResponse.async
+import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.io.IOException
 import java.net.URI
@@ -100,7 +102,9 @@ class ValidateUrlUseCaseImpl(
     override suspend fun BlockURL(url: String): ValidateUrlResponse {
         val path = Paths.get("repositories/src/main/resources/BLOCK_URL.txt")
         try {
-            val sc = Scanner(File(path.toString()))
+            val sc = withContext(Dispatchers.IO) {
+                Scanner(File(path.toString()))
+            }
             while (sc.hasNextLine()) {
                 val line = sc.nextLine()
                 if(url.contains(line)){
@@ -117,7 +121,9 @@ class ValidateUrlUseCaseImpl(
     override suspend fun BlockIP(ipRemote: String): ValidateUrlResponse {
         val path = Paths.get("repositories/src/main/resources/BLOCK_IP.txt")
         try {
-            val sc = Scanner(File(path.toString()))
+            val sc = withContext(Dispatchers.IO) {
+                Scanner(File(path.toString()))
+            }
             while (sc.hasNextLine()) {
                 val line = sc.nextLine()
                 if(line.equals(ipRemote)){
