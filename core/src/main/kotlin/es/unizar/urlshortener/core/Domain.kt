@@ -1,5 +1,6 @@
 package es.unizar.urlshortener.core
 
+import org.springframework.context.ApplicationEvent
 import java.time.OffsetDateTime
 
 /**
@@ -15,6 +16,7 @@ enum class ValidateUrlResponse {
 
 enum class ValidateUrlState {
     VALIDATION_ACEPT,
+    VALIDATION_SAFE,
     VALIDATION_IN_PROGRESS,
     VALIDATION_FAIL_NOT_REACHABLE,
     VALIDATION_FAIL_NOT_SAFE,
@@ -38,6 +40,8 @@ class InfoClientResponse(date: String, browser: String?, platform: String?) {
         this.platform = platform
     }
 }
+
+class GoogleEvent(source: Any, val id: String, val url: String) : ApplicationEvent(source)
 
 /**
  * A [Click] captures a request of redirection of a [ShortUrl] identified by its [hash].

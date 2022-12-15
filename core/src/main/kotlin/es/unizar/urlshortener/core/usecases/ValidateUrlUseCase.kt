@@ -24,9 +24,8 @@ import java.util.*
  */
 
 interface ValidateUrlUseCase {
-    suspend fun ValidateURL(url: String, ipRemote: String): ValidateUrlResponse
+    suspend fun ValidateURL(id: String, url: String, ipRemote: String): ValidateUrlResponse
     suspend fun ReachableURL(url: String): ValidateUrlResponse
-    suspend fun SafeURL(url: String): ValidateUrlResponse
     suspend fun BlockURL(url: String): ValidateUrlResponse
     suspend fun BlockIP(ipRemote: String): ValidateUrlResponse
 }
@@ -35,32 +34,39 @@ interface ValidateUrlUseCase {
  * Implementation of [ValidateUrlResponse].
  */
 class ValidateUrlUseCaseImpl(
+        private val shortUrlRepository: ShortUrlRepositoryService
 ) : ValidateUrlUseCase {
 
     @Autowired
     lateinit var restTemplate: RestTemplate
 
-    @Value("\${google.API.clientName}")
-    lateinit var googleClient: String
-    @Value("\${google.API.clientVersion}")
-    lateinit var googleVersion: String
-    @Value("\${google.API.url}")
-    lateinit var googleUrl: String
-    @Value("\${google.API.value}")
-    lateinit var googleValue: String
-
     /*** Comprobacion en paralelo y con corutanas de que la URL es segura y alcanzable ***/
-    override suspend fun ValidateURL(url: String, ipRemote: String): ValidateUrlResponse = coroutineScope {
+    override suspend fun ValidateURL(id: String, url: String, ipRemote: String): ValidateUrlResponse = coroutineScope {
         // Lanzamiento hilos ligeros
         val respReachable = async { ReachableURL(url) }
-        val respSafe = async { SafeURL(url) }
         val respBlockURL = async { BlockURL(url) }
         val respBlockIP = async { BlockIP(ipRemote) }
         // Respuesta hilos ligeros
-        if(respBlockURL.await() != ValidateUrlResponse.OK) respBlockURL.await()
-        else if (respBlockIP.await() != ValidateUrlResponse.OK) respBlockIP.await()
-        else if (respSafe.await() != ValidateUrlResponse.OK) respSafe.await()
-        else respReachable.await()
+        if(respBlockURL.await() != ValidateUrlResponse.OK) {
+            println("BLOCK URL")
+            shortUrlRepository.updateValidate(id, ValidateUrlState.VALIDATION_FAIL_BLOCK_URL)
+            shortUrlRepository.updateMode(id, 403)
+            respBlockURL.await()
+        }
+        else if (respBlockIP.await() != ValidateUrlResponse.OK){
+            println("BLOCK IP")
+            shortUrlRepository.updateValidate(id, ValidateUrlState.VALIDATION_FAIL_BLOCK_IP)
+            shortUrlRepository.updateMode(id, 403)
+            respBlockIP.await()
+        }
+        else if (respReachable.await() != ValidateUrlResponse.OK){
+            println("NOT REACHABLE")
+            shortUrlRepository.updateValidate(id, ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE)
+            shortUrlRepository.updateMode(id, 400)
+            respReachable.await()
+        } else {
+            ValidateUrlResponse.OK
+        }
     }
 
     /*** Validacion de que la URL es alcanzable ***/
@@ -75,27 +81,6 @@ class ValidateUrlUseCaseImpl(
         } catch (e: Exception){
             ValidateUrlResponse.NO_REACHABLE
         }
-    }
-
-    /*** Validacion de que la URL es segura con Google Safe Browse ***/
-    override suspend fun SafeURL(url: String): ValidateUrlResponse {
-        val Request = ThreatMatchesFindRequestBody(
-                ClientInfo(googleClient, googleVersion),
-                ThreatInfo(
-                        listOf(ThreatType.MALWARE,ThreatType.POTENTIALLY_HARMFUL_APPLICATION,ThreatType.UNWANTED_SOFTWARE),
-                        listOf(PlatformType.ALL_PLATFORMS),
-                        listOf(ThreatEntryType.URL),
-                        listOf(ThreatEntry(url,ThreatEntryRequestType.URL))
-                )
-        )
-        val mapper = jacksonObjectMapper()
-        val serializador = mapper.writeValueAsString(Request)
-        //https://testsafebrowsing.appspot.com/s/malware.html UNSAFE EXAMPLE
-        val httpResponse = restTemplate.postForObject(URI(googleUrl+googleValue), HttpEntity(serializador),ThreatMatchesFindResponseBody::class.java)
-        if(!httpResponse?.matches.isNullOrEmpty()){
-            return ValidateUrlResponse.UNSAFE
-        }
-        return ValidateUrlResponse.OK
     }
 
     /*** Comprobar que la URL no esta en la lista de bloqueados ***/

@@ -2,9 +2,11 @@ package es.unizar.urlshortener.infrastructure.repositories
 
 import es.unizar.urlshortener.core.*
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.transaction.annotation.Transactional
+import javax.persistence.LockModeType
 
 /**
  * Specification of the repository of [ShortUrlEntity].
@@ -19,9 +21,18 @@ interface ShortUrlEntityRepository : JpaRepository<ShortUrlEntity, String> {
 
     @Transactional
     @Modifying
-    //@Query("UPDATE ShortUrlEntity SET validation = ?2 where hash = ?1")
     @Query(value = "update ShortUrlEntity u set u.validation = ?2 where u.hash = ?1")
     fun updateValidateByHash(hash: String, status: ValidateUrlState): Int
+
+    @Transactional
+    @Modifying
+    @Query(value = "update ShortUrlEntity u set u.mode = ?2 where u.hash = ?1")
+    fun updateModeByHash(hash: String, mode: Int): Int
+
+    @Transactional
+    @Modifying
+    @Query(value = "update ShortUrlEntity u set u.safe = ?2 where u.hash = ?1")
+    fun updateSafeByHash(hash: String, safe: Boolean): Int
 }
 
 /**

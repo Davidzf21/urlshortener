@@ -51,7 +51,7 @@ class ApplicationConfiguration(
 
     /*** Nueva funcionalidades ***/
     @Bean
-    fun validateUrlUseCase() = ValidateUrlUseCaseImpl()
+    fun validateUrlUseCase() = ValidateUrlUseCaseImpl(shortUrlRepositoryService())
 
     @Bean
     fun infoClientUserCase() = InfoClientUserCaseImpl(clickRepositoryService())

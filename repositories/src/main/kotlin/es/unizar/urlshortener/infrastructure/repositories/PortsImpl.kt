@@ -36,6 +36,20 @@ class ShortUrlRepositoryServiceImpl(
         }
     }
 
+    override fun updateMode(id: String, mode: Int): Boolean {
+        id.let{
+            val isUpdated = shortUrlEntityRepository.updateModeByHash(id,mode)
+            return isUpdated == 1
+        }
+    }
+
+    override fun updateSafe(id: String, safe: Boolean): Boolean {
+        id.let{
+            val isUpdated = shortUrlEntityRepository.updateSafeByHash(id,safe)
+            return isUpdated == 1
+        }
+    }
+
     override fun deleteByKey(id: String) {
         shortUrlEntityRepository.deleteByHash(id)
     }

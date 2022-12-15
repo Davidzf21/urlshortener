@@ -1,12 +1,11 @@
 package es.unizar.urlshortener.core.usecases
 
 import es.unizar.urlshortener.core.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import org.apache.el.parser.AstFalse
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
-import org.springframework.web.servlet.function.ServerResponse.async
+import org.springframework.context.ApplicationEventPublisher
+
 
 /**
  * Given an url returns the key that is used to create a short URL.
@@ -30,10 +29,12 @@ class CreateShortUrlUseCaseImpl(
     @Autowired
     lateinit var validateUrlUseCase: ValidateUrlUseCase
 
+    @Autowired
+    lateinit var applicationEventPublisher: ApplicationEventPublisher
+
     override fun create(url: String, data: ShortUrlProperties): ShortUrl =
             if (validatorService.isValid(url)) {
                 runBlocking {
-                    val validateResponse = async { validateUrlUseCase.ValidateURL(url, data.ip!!) }
                     val id: String = hashService.hasUrl(url)
                     var su = ShortUrl(
                             hash = id,
@@ -47,44 +48,16 @@ class CreateShortUrlUseCaseImpl(
                     )
                     shortUrlRepository.save(su)
 
+                    /*** Enviar mensaje en la cola ***/
+                    applicationEventPublisher.publishEvent(GoogleEvent(this, su.hash, url))
+
+                    /*** Validaciones de la URL con Corutinas ***/
+                    val validateResponse = async { validateUrlUseCase.ValidateURL(su.hash, url, data.ip!!) }
+
                     /*** Comprobamos la validacion de la URL ***/
-                    when (validateResponse.await()) {
-                        ValidateUrlResponse.OK -> {
-                            println("OK")
-                            if (shortUrlRepository.updateValidate(su.hash, ValidateUrlState.VALIDATION_ACEPT)) {
-                                su = shortUrlRepository.findByKey(su.hash)!!
-                            } else {
-                                throw UpdateValidationNoWork(url)
-                            }
-                        }
-                        ValidateUrlResponse.NO_REACHABLE -> {
-                            println("NO_REACHABLE")
-                            su.validation = ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE
-                            su.redirection.mode = 400
-                            shortUrlRepository.save(su)
-                        }
-                        ValidateUrlResponse.UNSAFE -> {
-                            println("UNSAFE")
-                            su.validation = ValidateUrlState.VALIDATION_FAIL_NOT_SAFE
-                            su.properties.safe = false
-                            su.redirection.mode = 403
-                            shortUrlRepository.save(su)
-                        }
-                        ValidateUrlResponse.BLOCK_URL -> {
-                            println("BLOCK_URL")
-                            su.validation = ValidateUrlState.VALIDATION_FAIL_BLOCK_URL
-                            su.redirection.mode = 403
-                            shortUrlRepository.save(su)
-                        }
-                        ValidateUrlResponse.BLOCK_IP -> {
-                            println("BLOCK_IP")
-                            su.validation = ValidateUrlState.VALIDATION_FAIL_BLOCK_IP
-                            su.redirection.mode = 403
-                            shortUrlRepository.save(su)
-                        }
-                    }
-                    println(su)
-                    su
+                    validateResponse.await()
+                    println(shortUrlRepository.findByKey(su.hash))
+                    shortUrlRepository.findByKey(su.hash)!!
                 }
             } else {
                 throw InvalidUrlException(url)
