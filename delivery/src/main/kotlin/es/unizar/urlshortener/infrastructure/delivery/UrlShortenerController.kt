@@ -15,6 +15,7 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
+import ru.chermenin.ua.UserAgent
 import java.net.URI
 import java.util.*
 import javax.servlet.http.HttpServletRequest
@@ -80,7 +81,7 @@ class UrlShortenerControllerImpl(
     @GetMapping("/{id:(?!api|index).*}")
     override fun redirectTo(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<Void> =
         redirectUseCase.redirectTo(id).let {
-            //val ua = UserAgent
+            val ua = UserAgent.parse(request.getHeader("User-Agent"))
             if (it.mode == 403) throw RedirectionNotSafeOrBlock(id)
             if (it.mode == 400) throw RedirectionNotReachable(id)
             val browserDetails = request.getHeader("User-Agent")
