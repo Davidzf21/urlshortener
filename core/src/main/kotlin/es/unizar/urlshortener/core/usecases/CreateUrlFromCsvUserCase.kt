@@ -2,6 +2,9 @@ package es.unizar.urlshortener.core.usecases
 
 import es.unizar.urlshortener.core.*
 import org.springframework.web.multipart.MultipartFile
+import java.io.BufferedReader
+import java.io.FileReader
+import java.io.InputStreamReader
 
 /**
  * Given a file creates a short URL for each url in the file
@@ -17,7 +20,7 @@ interface CreateUrlsFromCsvUseCase {
 class CreateUrlsFromCsvUseCaseImpl(
         private val createShortUrlUseCase: CreateShortUrlUseCase
 ) : CreateUrlsFromCsvUseCase {
-    override fun create(file: MultipartFile, remoteAddr: String): ArrayList<String> {
+    /*override fun create(file: MultipartFile, remoteAddr: String): ArrayList<String> {
         if(checkTypeFile(file)){
             throw InvalidFileType()
         }
@@ -41,6 +44,32 @@ class CreateUrlsFromCsvUseCaseImpl(
             }
         }
         return makeList(shortUrlsFile, fall)
+    }*/
+
+    override fun create(file: MultipartFile, remoteAddr: String): ArrayList<String> {
+        if(checkTypeFile(file)){
+            throw InvalidFileType()
+        }
+        val shortUrlsFile = ArrayList<ShortUrl>()
+        var fall = false
+        val reader = BufferedReader(InputStreamReader(file.inputStream))
+        var line: String? = reader.readLine()
+        while (!line.isNullOrEmpty()) {
+            if(!line.contains(";")) {
+                val shortUrl = createShortUrlUseCase.create(
+                    url = line,
+                    data = ShortUrlProperties(
+                        ip = remoteAddr,
+                    )
+                )
+                shortUrlsFile.add(shortUrl)
+            } else {
+                fall = true
+                break
+            }
+            line = reader.readLine()
+        }
+        return makeList(shortUrlsFile,fall)
     }
 
     private fun checkTypeFile(file: MultipartFile): Boolean {
