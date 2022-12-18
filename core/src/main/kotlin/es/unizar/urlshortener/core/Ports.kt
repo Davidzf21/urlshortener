@@ -8,6 +8,8 @@ import es.unizar.urlshortener.core.*
 interface ClickRepositoryService {
     fun save(cl: Click): Click
     fun existHash(id: String): Boolean
+    fun editBrowser(id: String, data:String): Boolean
+    fun editSO(id: String, data:String): Boolean
     fun findByHash(id: String): List<Click>
 }
 

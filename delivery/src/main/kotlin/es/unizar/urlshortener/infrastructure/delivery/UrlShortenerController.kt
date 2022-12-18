@@ -10,11 +10,13 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.hateoas.server.mvc.linkTo
 import org.springframework.http.HttpHeaders
+import kotlinx.coroutines.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
+import org.springframework.web.servlet.function.ServerResponse.async
 import ru.chermenin.ua.UserAgent
 import java.net.URI
 import java.util.*
@@ -81,14 +83,15 @@ class UrlShortenerControllerImpl(
     @GetMapping("/{id:(?!api|index).*}")
     override fun redirectTo(@PathVariable id: String, request: HttpServletRequest): ResponseEntity<Void> =
         redirectUseCase.redirectTo(id).let {
-            val ua = UserAgent.parse(request.getHeader("User-Agent"))
             if (it.mode == 403) throw RedirectionNotSafeOrBlock(id)
             if (it.mode == 400) throw RedirectionNotReachable(id)
-            val browserDetails = request.getHeader("User-Agent")
-            val requestBrowser = logClickUseCase.getBrowser(browserDetails)
-            val requestPlatform = logClickUseCase.getPlataform(browserDetails)
-            logClickUseCase.logClick(id, ClickProperties(ip = request.remoteAddr, browser = requestBrowser,
-                    platform = requestPlatform))
+            val userAgent = request.getHeader("User-Agent").toString()
+            logClickUseCase.logClick(id, ClickProperties(ip = request.remoteAddr))
+            CoroutineScope(Dispatchers.IO).launch() {
+                println(userAgent)
+                println(UserAgent.Companion.parse(userAgent).toString())
+                async { logClickUseCase.setPropieties(id, UserAgent.Companion.parse(userAgent)) }
+            }
             val h = HttpHeaders()
             h.location = URI.create(it.target)
             ResponseEntity<Void>(h, HttpStatus.valueOf(it.mode))

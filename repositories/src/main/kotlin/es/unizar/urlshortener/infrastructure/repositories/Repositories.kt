@@ -46,4 +46,14 @@ interface ClickEntityRepository : JpaRepository<ClickEntity, Long> {
 
     fun findAllByHash(hash: String): List<ClickEntity>
 
+    @Transactional
+    @Modifying
+    @Query(value = "update ClickEntity u set u.browser = ?2 where u.hash = ?1 and u.browser IS NULL")
+    fun updateBrowser(hash: String, data: String): Int
+
+    @Transactional
+    @Modifying
+    @Query(value = "update ClickEntity u set u.platform = ?2 where u.hash = ?1 and u.platform IS NULL")
+    fun updateSO(hash: String, data: String): Int
+
 }

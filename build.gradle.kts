@@ -48,6 +48,7 @@ project(":core") {
         "implementation"("org.springframework.boot:spring-boot-starter-websocket")
         "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
         "implementation"("com.fasterxml.jackson.module:jackson-module-kotlin")
+        "implementation"("ru.chermenin:kotlin-user-agents:0.2.2")
     }
     tasks.getByName<BootJar>("bootJar") {
         enabled = false
@@ -60,7 +61,14 @@ project(":repositories") {
     apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
     dependencies {
         "implementation"(project(":core"))
+        "implementation"(project(":delivery"))
+        "testImplementation"("org.springframework.boot:spring-boot-starter-test")
         "implementation"("org.springframework.boot:spring-boot-starter-data-jpa")
+        "testImplementation"("org.mockito.kotlin:mockito-kotlin:$mockitoVersion")
+        "testImplementation"("org.springframework.boot:spring-boot-starter-web")
+        "testImplementation"("org.springframework.boot:spring-boot-starter-jdbc")
+        "testImplementation"("com.fasterxml.jackson.module:jackson-module-kotlin")
+        "testImplementation"("org.apache.httpcomponents:httpclient")
     }
     tasks.getByName<BootJar>("bootJar") {
         enabled = false
@@ -81,6 +89,7 @@ project(":delivery") {
         "implementation"("org.springframework.boot:spring-boot-starter-thymeleaf:2.5.3")
         "implementation"("ru.chermenin:kotlin-user-agents:0.2.2")
 
+        "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
         "testImplementation"("org.springframework.boot:spring-boot-starter-test")
         "testImplementation"("org.mockito.kotlin:mockito-kotlin:$mockitoVersion")
 

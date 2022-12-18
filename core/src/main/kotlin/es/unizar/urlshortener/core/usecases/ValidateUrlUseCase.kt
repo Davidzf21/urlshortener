@@ -8,6 +8,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.core.io.ClassPathResource
 import org.springframework.http.HttpEntity
 import org.springframework.web.client.RestTemplate
 import java.io.File
@@ -24,10 +25,10 @@ import java.util.*
  */
 
 interface ValidateUrlUseCase {
-    suspend fun ValidateURL(id: String, url: String, ipRemote: String): ValidateUrlResponse
-    suspend fun ReachableURL(url: String): ValidateUrlResponse
-    suspend fun BlockURL(url: String): ValidateUrlResponse
-    suspend fun BlockIP(ipRemote: String): ValidateUrlResponse
+    suspend fun validateURL(id: String, url: String, ipRemote: String): ValidateUrlResponse
+    suspend fun reachableURL(url: String): ValidateUrlResponse
+    suspend fun blockURL(url: String): ValidateUrlResponse
+    suspend fun blockIP(ipRemote: String): ValidateUrlResponse
 }
 
 /**
@@ -41,11 +42,11 @@ class ValidateUrlUseCaseImpl(
     lateinit var restTemplate: RestTemplate
 
     /*** Comprobacion en paralelo y con corutanas de que la URL es segura y alcanzable ***/
-    override suspend fun ValidateURL(id: String, url: String, ipRemote: String): ValidateUrlResponse = coroutineScope {
+    override suspend fun validateURL(id: String, url: String, ipRemote: String): ValidateUrlResponse = coroutineScope {
         // Lanzamiento hilos ligeros
-        val respReachable = async { ReachableURL(url) }
-        val respBlockURL = async { BlockURL(url) }
-        val respBlockIP = async { BlockIP(ipRemote) }
+        val respReachable = async { reachableURL(url) }
+        val respBlockURL = async { blockURL(url) }
+        val respBlockIP = async { blockIP(ipRemote) }
         // Respuesta hilos ligeros
         if(respBlockURL.await() != ValidateUrlResponse.OK) {
             println("BLOCK URL")
@@ -70,7 +71,7 @@ class ValidateUrlUseCaseImpl(
     }
 
     /*** Validacion de que la URL es alcanzable ***/
-    override suspend fun ReachableURL(url: String): ValidateUrlResponse {
+    override suspend fun reachableURL(url: String): ValidateUrlResponse {
         return try {
             var resp = restTemplate.getForEntity(url, String::class.java)
             if(resp.statusCode.is2xxSuccessful) {
@@ -84,8 +85,8 @@ class ValidateUrlUseCaseImpl(
     }
 
     /*** Comprobar que la URL no esta en la lista de bloqueados ***/
-    override suspend fun BlockURL(url: String): ValidateUrlResponse {
-        val path = Paths.get("repositories/src/main/resources/BLOCK_URL.txt")
+    override suspend fun blockURL(url: String): ValidateUrlResponse {
+        val path = ClassPathResource("BLOCK_URL.txt").file
         try {
             val sc = withContext(Dispatchers.IO) {
                 Scanner(File(path.toString()))
@@ -103,8 +104,8 @@ class ValidateUrlUseCaseImpl(
     }
 
     /*** Comprobar que la IP del creador no esta en la lista de bloqueados ***/
-    override suspend fun BlockIP(ipRemote: String): ValidateUrlResponse {
-        val path = Paths.get("repositories/src/main/resources/BLOCK_IP.txt")
+    override suspend fun blockIP(ipRemote: String): ValidateUrlResponse {
+        val path = ClassPathResource("BLOCK_IP.txt").file
         try {
             val sc = withContext(Dispatchers.IO) {
                 Scanner(File(path.toString()))

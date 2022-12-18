@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment
 import org.springframework.boot.test.web.client.TestRestTemplate
 import org.springframework.boot.test.web.server.LocalServerPort
+import org.springframework.core.io.ClassPathResource
 import org.springframework.http.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.mock.web.MockMultipartFile
@@ -20,9 +21,11 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.context.WebApplicationContext
-import java.nio.file.Files
+import java.io.*
 import java.net.URI
+import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.*
 
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -155,22 +158,41 @@ class HttpRequestTest {
 
     @Test
     fun `Test para comprobar la funcionalidad de que una URL esta bloqueada`() {
-        //val path = Paths.get("..\\repositories\\src\\main\\resources\\BLOCK_URL.txt") // URL Bloqueada
-        var line = "https://www.amazon.es/"
-        /*try {
+        var line = ""
+        val path = Paths.get("../app/src/main/resources/BLOCK_URL.txt")
+        try {
             val sc = Scanner(File(path.toString()))
             line = sc.nextLine()
         } catch (e: IOException) {
             e.printStackTrace()
-        }*/
-        val respHeaders = shortUrl("https://www.amazon.es/")
+        }
+        val respHeaders = shortUrl(line)
         val target = respHeaders.headers.location
         require(target != null)
         // POST /api/link
-        //assertThat(respHeaders.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
+        assertThat(respHeaders.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
         // GET /{id}
-        //val response = restTemplate.getForEntity(target, String::class.java)
-        //assertThat(response.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
+        val response = restTemplate.getForEntity(target, String::class.java)
+        assertThat(response.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
+    }
+
+    @Test
+    fun `Test para comprobar la funcionalidad de que una IP esta bloqueada`() {
+        // Añadimos nuestra IP para que este bloqueada
+        val path = ClassPathResource("BLOCK_IP.txt").file
+        val printWriter = FileWriter(path.toString(), true)
+        printWriter.write("\n127.0.0.1")
+        printWriter.close()
+        // Creamos la peticion con una URL válida
+        val respHeaders = shortUrl("https://www.youtube.com")
+        val target = respHeaders.headers.location
+        require(target != null)
+        // POST /api/link
+        assertThat(respHeaders.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
+        // GET /{id}
+        val response = restTemplate.getForEntity(target, String::class.java)
+        assertThat(response.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
+
     }
 
     @Test
@@ -219,11 +241,25 @@ class HttpRequestTest {
                 .andExpect(MockMvcResultMatchers.content().contentType("text/csv"))
                 .andReturn()
         assertThat(resp.response.getHeaderValue("Location").toString().isNotEmpty())
+        val contenidoFichero = resp.response.contentAsString.split(";")
+        assertThat(contenidoFichero[0].contains("https://www.netflix.com/es/"))
+        assertThat(contenidoFichero[2].contains("OK"))
+        assertThat(contenidoFichero[2].contains("https://www.instant-gaming.com/es/"))
+        assertThat(contenidoFichero[4].contains("OK"))
+        assertThat(contenidoFichero[4].contains("https://www.unizar.es/"))
+        assertThat(contenidoFichero[6].contains("OK"))
+        assertThat(contenidoFichero[6].contains("https://www.yoooooutube.com/"))
+        assertThat(contenidoFichero[8].contains("ERROR: VALIDATION_FAIL_NOT_REACHABLE"))
+        assertThat(contenidoFichero[8].contains("https://www.reddit.com/"))
+        assertThat(contenidoFichero[10].contains("OK"))
+        assertThat(contenidoFichero[10].contains("https://www.twitch.tv/"))
+        assertThat(contenidoFichero[12].contains("ERROR: VALIDATION_FAIL_BLOCK_URL"))
+        assertThat(contenidoFichero[12].contains("https://www.spotify.com/es/"))
+        assertThat(contenidoFichero[14].contains("OK"))
+        assertThat(contenidoFichero[14].contains("https://testsafebrowsing.appspot.com/s/malware.html"))
+        assertThat(contenidoFichero[16].contains("ERROR: VALIDATION_FAIL_NOT_SAFE"))
 
-        val a = resp.response.contentAsString
-        println(a)
     }
-
 
     /*** ********************************************** ***/
 

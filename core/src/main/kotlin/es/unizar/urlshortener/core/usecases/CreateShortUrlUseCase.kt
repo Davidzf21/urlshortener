@@ -52,7 +52,7 @@ class CreateShortUrlUseCaseImpl(
                     applicationEventPublisher.publishEvent(GoogleEvent(this, su.hash, url))
 
                     /*** Validaciones de la URL con Corutinas ***/
-                    val validateResponse = async { validateUrlUseCase.ValidateURL(su.hash, url, data.ip!!) }
+                    val validateResponse = async { validateUrlUseCase.validateURL(su.hash, url, data.ip!!) }
 
                     /*** Comprobamos la validacion de la URL ***/
                     validateResponse.await()

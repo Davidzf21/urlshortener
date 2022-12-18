@@ -17,6 +17,20 @@ class ClickRepositoryServiceImpl(
     override fun findByHash(id: String): List<Click> = clickEntityRepository.findAllByHash(id).map { it.toDomain() }
 
     override fun existHash(id: String): Boolean = clickEntityRepository.existsByHash(id)
+
+    override fun editBrowser(id: String, data:String): Boolean {
+        id.let{
+            val isUpdated = clickEntityRepository.updateBrowser(id, data)
+            return isUpdated == 1
+        }
+    }
+
+    override fun editSO(id: String, data:String): Boolean {
+        id.let{
+            val isUpdated = clickEntityRepository.updateSO(id, data)
+            return isUpdated == 1
+        }
+    }
 }
 
 /**
