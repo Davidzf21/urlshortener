@@ -30,13 +30,18 @@ class CreateUrlsFromCsvUseCaseImpl(
         var line: String? = reader.readLine()
         while (!line.isNullOrEmpty()) {
             if(!line.contains(";")) {
-                val shortUrl = createShortUrlUseCase.create(
-                    url = line,
-                    data = ShortUrlProperties(
-                        ip = remoteAddr,
+                if(line.contains("https://")) {
+                    val shortUrl = createShortUrlUseCase.create(
+                            url = line,
+                            data = ShortUrlProperties(
+                                    ip = remoteAddr,
+                            )
                     )
-                )
-                shortUrlsFile.add(shortUrl)
+                    shortUrlsFile.add(shortUrl)
+                } else {
+                    val shortUrlFail = ShortUrl (hash = "Format Invalid", redirection = Redirection (target = line))
+                    shortUrlsFile.add(shortUrlFail)
+                }
             } else {
                 fall = true
                 break
@@ -57,17 +62,14 @@ class CreateUrlsFromCsvUseCaseImpl(
     private fun makeList(it: ArrayList<ShortUrl>, fall: Boolean): ArrayList<String> {
         val newLines = ArrayList<String>()
         for(i in 0 until it.size){
-            val originalURL = it[i].redirection.target
-            val shortURL = "http://localhost:8080/" + it[i].hash
+            val originalURL = it[i].redirection?.target
+            var shortURL = "Format Invalid"
+            if (it[i].hash != "Format Invalid") {
+                shortURL = "http://localhost:8080/" + it[i].hash
+            }
             var error = "OK"
-            if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE)){
-                error = "ERROR: VALIDATION_FAIL_NOT_REACHABLE"
-            } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_NOT_SAFE)){
-                error = "ERROR: VALIDATION_FAIL_NOT_SAFE"
-            } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_BLOCK_URL)){
-                error = "ERROR: VALIDATION_FAIL_BLOCK_URL"
-            } else if (it[i].validation.equals(ValidateUrlState.VALIDATION_FAIL_BLOCK_IP)){
-                error = "ERROR: VALIDATION_FAIL_BLOCK_IP"
+            if (it[i].hash == "Format Invalid"){
+                error = "ERROR: debe ser una URI http o https"
             }
             newLines.add("$originalURL;$shortURL;$error")
         }

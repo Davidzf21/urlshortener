@@ -2,7 +2,6 @@ package es.unizar.urlshortener.infrastructure.delivery
 
 import es.unizar.urlshortener.core.FileStore
 import es.unizar.urlshortener.core.InfoClientResponse
-import es.unizar.urlshortener.core.ValidateUrlState
 import es.unizar.urlshortener.core.usecases.*
 import org.apache.tomcat.util.http.fileupload.IOUtils
 import org.springframework.beans.factory.annotation.Autowired

@@ -25,10 +25,9 @@ import java.util.*
  */
 
 interface ValidateUrlUseCase {
-    suspend fun validateURL(id: String, url: String, ipRemote: String): ValidateUrlResponse
-    suspend fun reachableURL(url: String): ValidateUrlResponse
-    suspend fun blockURL(url: String): ValidateUrlResponse
-    suspend fun blockIP(ipRemote: String): ValidateUrlResponse
+    suspend fun reachableURL(id: String, url: String)
+    suspend fun blockURL(id: String, url: String)
+    suspend fun blockIP(id: String, ipRemote: String)
 }
 
 /**
@@ -41,51 +40,26 @@ class ValidateUrlUseCaseImpl(
     @Autowired
     lateinit var restTemplate: RestTemplate
 
-    /*** Comprobacion en paralelo y con corutanas de que la URL es segura y alcanzable ***/
-    override suspend fun validateURL(id: String, url: String, ipRemote: String): ValidateUrlResponse = coroutineScope {
-        // Lanzamiento hilos ligeros
-        val respReachable = async { reachableURL(url) }
-        val respBlockURL = async { blockURL(url) }
-        val respBlockIP = async { blockIP(ipRemote) }
-        // Respuesta hilos ligeros
-        if(respBlockURL.await() != ValidateUrlResponse.OK) {
-            println("BLOCK URL")
-            shortUrlRepository.updateValidate(id, ValidateUrlState.VALIDATION_FAIL_BLOCK_URL)
-            shortUrlRepository.updateMode(id, 403)
-            respBlockURL.await()
-        }
-        else if (respBlockIP.await() != ValidateUrlResponse.OK){
-            println("BLOCK IP")
-            shortUrlRepository.updateValidate(id, ValidateUrlState.VALIDATION_FAIL_BLOCK_IP)
-            shortUrlRepository.updateMode(id, 403)
-            respBlockIP.await()
-        }
-        else if (respReachable.await() != ValidateUrlResponse.OK){
-            println("NOT REACHABLE")
-            shortUrlRepository.updateValidate(id, ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE)
-            shortUrlRepository.updateMode(id, 400)
-            respReachable.await()
-        } else {
-            ValidateUrlResponse.OK
-        }
-    }
-
     /*** Validacion de que la URL es alcanzable ***/
-    override suspend fun reachableURL(url: String): ValidateUrlResponse {
+    override suspend fun reachableURL(id: String, url: String) {
         return try {
             var resp = restTemplate.getForEntity(url, String::class.java)
             if(resp.statusCode.is2xxSuccessful) {
-                ValidateUrlResponse.OK
+                shortUrlRepository.updateReachableInfo(id, ReachableUrlState.REACHABLE)
             } else {
-                ValidateUrlResponse.NO_REACHABLE
+                println("NOT REACHABLE")
+                shortUrlRepository.updateMode(id, 400)
+                shortUrlRepository.updateReachableInfo(id, ReachableUrlState.FAIL_NOT_REACHABLE)
             }
         } catch (e: Exception){
-            ValidateUrlResponse.NO_REACHABLE
+            println("NOT REACHABLE")
+            shortUrlRepository.updateMode(id, 400)
+            shortUrlRepository.updateReachableInfo(id, ReachableUrlState.FAIL_NOT_REACHABLE)
         }
     }
 
     /*** Comprobar que la URL no esta en la lista de bloqueados ***/
-    override suspend fun blockURL(url: String): ValidateUrlResponse {
+    override suspend fun blockURL(id: String, url: String) {
         val path = ClassPathResource("BLOCK_URL.txt").file
         try {
             val sc = withContext(Dispatchers.IO) {
@@ -94,17 +68,20 @@ class ValidateUrlUseCaseImpl(
             while (sc.hasNextLine()) {
                 val line = sc.nextLine()
                 if(url.contains(line)){
-                    return ValidateUrlResponse.BLOCK_URL
+                    println("BLOCK URL")
+                    shortUrlRepository.updateMode(id, 403)
+                    shortUrlRepository.updateBlockInfo(id, BlockUrlState.FAIL_BLOCK_URL)
                 }
             }
         } catch (e: IOException) {
+            shortUrlRepository.updateMode(id, 403)
+            shortUrlRepository.updateBlockInfo(id, BlockUrlState.FAIL_BLOCK_URL)
             e.printStackTrace()
         }
-        return ValidateUrlResponse.OK
     }
 
     /*** Comprobar que la IP del creador no esta en la lista de bloqueados ***/
-    override suspend fun blockIP(ipRemote: String): ValidateUrlResponse {
+    override suspend fun blockIP(id: String, ipRemote: String) {
         val path = ClassPathResource("BLOCK_IP.txt").file
         try {
             val sc = withContext(Dispatchers.IO) {
@@ -113,13 +90,16 @@ class ValidateUrlUseCaseImpl(
             while (sc.hasNextLine()) {
                 val line = sc.nextLine()
                 if(line.equals(ipRemote)){
-                    return ValidateUrlResponse.BLOCK_IP
+                    println("BLOCK IP")
+                    shortUrlRepository.updateMode(id, 403)
+                    shortUrlRepository.updateBlockInfo(id, BlockUrlState.FAIL_BLOCK_IP)
                 }
             }
         } catch (e: IOException) {
+            shortUrlRepository.updateMode(id, 403)
+            shortUrlRepository.updateBlockInfo(id, BlockUrlState.FAIL_BLOCK_IP)
             e.printStackTrace()
         }
-        return ValidateUrlResponse.OK
     }
 
 }

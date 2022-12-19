@@ -21,8 +21,13 @@ interface ShortUrlEntityRepository : JpaRepository<ShortUrlEntity, String> {
 
     @Transactional
     @Modifying
-    @Query(value = "update ShortUrlEntity u set u.validation = ?2 where u.hash = ?1")
-    fun updateValidateByHash(hash: String, status: ValidateUrlState): Int
+    @Query(value = "update ShortUrlEntity u set u.blockInfo = ?2 where u.hash = ?1")
+    fun updateBlockByHash(hash: String, status: BlockUrlState): Int
+
+    @Transactional
+    @Modifying
+    @Query(value = "update ShortUrlEntity u set u.reachableInfo = ?2 where u.hash = ?1")
+    fun updateReachableByHash(hash: String, status: ReachableUrlState): Int
 
     @Transactional
     @Modifying

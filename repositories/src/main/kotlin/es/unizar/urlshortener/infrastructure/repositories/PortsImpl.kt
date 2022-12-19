@@ -43,10 +43,15 @@ class ShortUrlRepositoryServiceImpl(
 
     override fun save(su: ShortUrl): ShortUrl = shortUrlEntityRepository.save(su.toEntity()).toDomain()
 
-    override fun updateValidate(id: String, state: ValidateUrlState): Boolean {
+    override fun updateBlockInfo(id: String, state: BlockUrlState) {
         id.let{
-            val isUpdated = shortUrlEntityRepository.updateValidateByHash(id,state)
-            return isUpdated == 1
+            shortUrlEntityRepository.updateBlockByHash(id,state)
+        }
+    }
+
+    override fun updateReachableInfo(id: String, state: ReachableUrlState){
+        id.let{
+            shortUrlEntityRepository.updateReachableByHash(id,state)
         }
     }
 

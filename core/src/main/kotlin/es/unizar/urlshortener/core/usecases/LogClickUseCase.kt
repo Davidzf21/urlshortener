@@ -16,7 +16,6 @@ import javax.servlet.http.HttpServletRequest
  */
 interface LogClickUseCase {
     fun logClick(key: String, data: ClickProperties)
-    suspend fun setPropieties(id: String, data: UserAgent)
     suspend fun setBrowser(id: String, data: UserAgent)
     suspend fun setPlataform(id: String, data: UserAgent)
 }
@@ -37,19 +36,12 @@ class LogClickUseCaseImpl(
         clickRepository.save(cl)
     }
 
-    override suspend fun setPropieties(id: String, data: UserAgent) {
-        CoroutineScope(Dispatchers.IO).launch() {
-            async { setBrowser(id, data) }
-            async { setPlataform(id, data) }
-        }
-    }
-
-    /** Devuelve el nombre del navegador desde donde se hace la peticion ***/
+    /** Persistencia del nombre del navegador desde donde se hace la peticion ***/
     override suspend fun setBrowser(id: String, data: UserAgent) {
         clickRepository.editBrowser(id, data.toString().split("/")[2])
     }
 
-    /** Devuelve el nombre del SO desde donde se hace la peticion ***/
+    /** Persistencia del nombre del SO desde donde se hace la peticion ***/
     override suspend fun setPlataform(id: String, data: UserAgent) {
         clickRepository.editSO(id, data.toString().split("/")[1])
     }

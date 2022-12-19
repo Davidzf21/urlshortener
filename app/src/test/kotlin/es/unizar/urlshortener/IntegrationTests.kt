@@ -1,5 +1,6 @@
 package es.unizar.urlshortener
 
+import com.fasterxml.jackson.core.JsonParser
 import es.unizar.urlshortener.infrastructure.delivery.ShortUrlDataOut
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -137,9 +138,8 @@ class HttpRequestTest {
         // GET /api/link
         val response1 = restTemplate.getForEntity("http://localhost:$port/api/link/"+hash, String::class.java)
         assertThat(response1.statusCode).isEqualTo(HttpStatus.OK)   //Comp. de 200 OK
-        assertThat(response1.body?.contains("TEST NAVEGADOR")).isEqualTo(true)  //Comp. que devuelve Navegador
-        assertThat(response1.body?.contains("TEST PLATAFORMA")).isEqualTo(true) //Comp. que devuelve Plataforma
-        println("FINAL")
+        response1.body?.split(":")?.get(3)?.let { assertThat(it.isNullOrEmpty()) }  //Comp. que devuelve Navegador
+        response1.body?.split(":")?.get(5)?.let { assertThat(it.isNullOrEmpty()) } //Comp. que devuelve Plataforma
     }
 
     @Test

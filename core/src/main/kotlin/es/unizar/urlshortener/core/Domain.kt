@@ -4,25 +4,19 @@ import org.springframework.context.ApplicationEvent
 import java.time.OffsetDateTime
 
 /**
- * Diferentes valores ara el campo de [Validacion].
+ * Diferentes valores ara los campos de [Validacion].
  */
-enum class ValidateUrlResponse {
-    OK,
-    NO_REACHABLE,
-    UNSAFE,
-    BLOCK_URL,
-    BLOCK_IP
+enum class BlockUrlState {
+    NOT_DONE,
+    FAIL_BLOCK_URL,
+    FAIL_BLOCK_IP,
+    OK
 }
 
-enum class ValidateUrlState {
-    VALIDATION_ACEPT,
-    VALIDATION_SAFE,
-    VALIDATION_IN_PROGRESS,
-    VALIDATION_FAIL_NOT_REACHABLE,
-    VALIDATION_FAIL_NOT_SAFE,
-    VALIDATION_FAIL_BLOCK_URL,
-    VALIDATION_FAIL_BLOCK_IP,
-    VALIDATION_NOT_DONE
+enum class ReachableUrlState {
+    NOT_DONE,
+    FAIL_NOT_REACHABLE,
+    REACHABLE,
 }
 
 /**
@@ -41,6 +35,9 @@ class InfoClientResponse(date: String, browser: String?, platform: String?) {
     }
 }
 
+/**
+ * Evento para la cola de mensajes del Google Safe Browsing
+ */
 class GoogleEvent(source: Any, val id: String, val url: String) : ApplicationEvent(source)
 
 /**
@@ -56,11 +53,12 @@ data class Click(
  * A [ShortUrl] is the mapping between a remote url identified by [redirection] and a local short url identified by [hash].
  */
 data class ShortUrl(
-        val hash: String,
-        val redirection: Redirection,
+        var hash: String,
+        var redirection: Redirection,
         val created: OffsetDateTime = OffsetDateTime.now(),
         val properties: ShortUrlProperties = ShortUrlProperties(),
-        var validation: ValidateUrlState = ValidateUrlState.VALIDATION_NOT_DONE
+        var blockInfo: BlockUrlState = BlockUrlState.NOT_DONE,
+        var reachableInfo: ReachableUrlState = ReachableUrlState.NOT_DONE
 )
 
 /**

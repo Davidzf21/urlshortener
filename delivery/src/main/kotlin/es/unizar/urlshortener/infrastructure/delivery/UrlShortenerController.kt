@@ -16,7 +16,6 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.client.RestTemplate
-import org.springframework.web.servlet.function.ServerResponse.async
 import ru.chermenin.ua.UserAgent
 import java.net.URI
 import java.util.*
@@ -88,9 +87,8 @@ class UrlShortenerControllerImpl(
             val userAgent = request.getHeader("User-Agent").toString()
             logClickUseCase.logClick(id, ClickProperties(ip = request.remoteAddr))
             CoroutineScope(Dispatchers.IO).launch() {
-                println(userAgent)
-                println(UserAgent.Companion.parse(userAgent).toString())
-                async { logClickUseCase.setPropieties(id, UserAgent.Companion.parse(userAgent)) }
+                async { logClickUseCase.setBrowser(id, UserAgent.Companion.parse(userAgent)) }
+                async { logClickUseCase.setPlataform(id, UserAgent.Companion.parse(userAgent)) }
             }
             val h = HttpHeaders()
             h.location = URI.create(it.target)
@@ -109,24 +107,27 @@ class UrlShortenerControllerImpl(
             val h = HttpHeaders()
             val url = linkTo<UrlShortenerControllerImpl> { redirectTo(it.hash, request) }.toUri()
             h.location = url
-            var errores = ""
+            var errors = ""
             var state = HttpStatus.CREATED
-            when (it.validation) {
-                ValidateUrlState.VALIDATION_FAIL_NOT_SAFE -> {
-                    errores = "URI de destino no es segura"
-                    state = HttpStatus.BAD_REQUEST
-                }
-                ValidateUrlState.VALIDATION_FAIL_NOT_REACHABLE -> {
-                    errores = "URI de destino no es alcanzable"
-                    state = HttpStatus.BAD_REQUEST
-                }
-                ValidateUrlState.VALIDATION_FAIL_BLOCK_URL -> {
-                    errores = "URI de destino esta bloqueada"
+            if(!it.properties.safe) {
+                errors = "URL de destino no es segura (Google Safe Browsing)"
+                state = HttpStatus.BAD_REQUEST
+            }
+            when (it.blockInfo) {
+                BlockUrlState.FAIL_BLOCK_URL -> {
+                    errors = "URL de destino está bloquedad"
                     state = HttpStatus.FORBIDDEN
                 }
-                ValidateUrlState.VALIDATION_FAIL_BLOCK_IP -> {
-                    errores = "IP del creador esta bloqueada"
+                BlockUrlState.FAIL_BLOCK_IP -> {
+                    errors = "IP del creador está bloqueada"
                     state = HttpStatus.FORBIDDEN
+                }
+                else -> {}
+            }
+            when (it.reachableInfo) {
+                ReachableUrlState.FAIL_NOT_REACHABLE -> {
+                    errors = "URL de destino no es alcanzable"
+                    state = HttpStatus.BAD_REQUEST
                 }
                 else -> {}
             }
@@ -134,9 +135,10 @@ class UrlShortenerControllerImpl(
                 url = url,
                 properties = mapOf(
                     "safe" to it.properties.safe,
-                    "error" to errores
+                    "error" to errors
                 )
             )
+            println(it)
             ResponseEntity<ShortUrlDataOut>(response, h, state)
         }
 

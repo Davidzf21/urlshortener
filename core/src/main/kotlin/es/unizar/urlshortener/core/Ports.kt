@@ -19,7 +19,8 @@ interface ClickRepositoryService {
 interface ShortUrlRepositoryService {
     fun findByKey(id: String): ShortUrl?
     fun save(su: ShortUrl): ShortUrl
-    fun updateValidate(id: String, state: ValidateUrlState): Boolean
+    fun updateBlockInfo(id: String, state: BlockUrlState)
+    fun updateReachableInfo(id: String, state: ReachableUrlState)
     fun updateMode(id: String, mode: Int): Boolean
     fun updateSafe(id: String, safe: Boolean): Boolean
     fun deleteByKey(id: String)

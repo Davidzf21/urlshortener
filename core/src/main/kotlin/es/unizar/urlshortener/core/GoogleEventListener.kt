@@ -47,11 +47,10 @@ class GoogleEventListener (
         val httpResponse = restTemplate.postForObject(URI(googleUrl+googleValue), HttpEntity(serializador), ThreatMatchesFindResponseBody::class.java)
         if(!httpResponse?.matches.isNullOrEmpty()){
             println("NOT SAFE")
-            shortUrlRepository.updateValidate(id, ValidateUrlState.VALIDATION_FAIL_NOT_SAFE)
             shortUrlRepository.updateMode(id, 403)
             shortUrlRepository.updateSafe(id, false)
         } else {
-            shortUrlRepository.updateValidate(id, ValidateUrlState.VALIDATION_SAFE)
+            shortUrlRepository.updateSafe(id, true)
         }
     }
 }

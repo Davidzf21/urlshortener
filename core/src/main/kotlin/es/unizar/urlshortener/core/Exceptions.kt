@@ -10,7 +10,7 @@ class RedirectionNotSafeOrBlock(val key: String) : Exception("Hash [$key] redire
 
 class ShortUrlNotSafe(val key: String) : Exception("Page [$key] is not safe")
 
-class RedirectionNotReachable(val key: String) : Exception("Hash [$key] redirection block. Page is not reachable")
+class RedirectionNotReachable(val key: String) : Exception("Hash [$key] redirection fail. Page is not reachable")
 
 class InvalidFileType(): Exception("The format is not supported, only .csv files")
 

@@ -1,10 +1,10 @@
 package es.unizar.urlshortener.core.usecases
 
 import es.unizar.urlshortener.core.*
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
+import ru.chermenin.ua.UserAgent
 
 
 /**
@@ -34,31 +34,31 @@ class CreateShortUrlUseCaseImpl(
 
     override fun create(url: String, data: ShortUrlProperties): ShortUrl =
             if (validatorService.isValid(url)) {
-                runBlocking {
-                    val id: String = hashService.hasUrl(url)
-                    var su = ShortUrl(
-                            hash = id,
-                            redirection = Redirection(target = url),
-                            properties = ShortUrlProperties(
-                                    safe = data.safe,
-                                    ip = data.ip,
-                                    sponsor = data.sponsor
-                            ),
-                            validation = ValidateUrlState.VALIDATION_IN_PROGRESS
-                    )
-                    shortUrlRepository.save(su)
+                val id: String = hashService.hasUrl(url)
+                var su = ShortUrl(
+                        hash = id,
+                        redirection = Redirection(target = url),
+                        properties = ShortUrlProperties(
+                                safe = data.safe,
+                                ip = data.ip,
+                                sponsor = data.sponsor
+                        ),
+                        blockInfo = BlockUrlState.OK,
+                        reachableInfo = ReachableUrlState.REACHABLE
+                )
+                shortUrlRepository.save(su)
 
-                    /*** Enviar mensaje en la cola ***/
-                    applicationEventPublisher.publishEvent(GoogleEvent(this, su.hash, url))
+                /*** Enviar mensaje en la cola ***/
+                applicationEventPublisher.publishEvent(GoogleEvent(this, su.hash, url))
 
-                    /*** Validaciones de la URL con Corutinas ***/
-                    val validateResponse = async { validateUrlUseCase.validateURL(su.hash, url, data.ip!!) }
-
-                    /*** Comprobamos la validacion de la URL ***/
-                    validateResponse.await()
-                    println(shortUrlRepository.findByKey(su.hash))
-                    shortUrlRepository.findByKey(su.hash)!!
+                /*** Validaciones de la URL con Corutinas ***/
+                CoroutineScope(Dispatchers.IO).launch() {
+                    async { validateUrlUseCase.reachableURL(id, url) }
+                    async { validateUrlUseCase.blockURL(id, url) }
+                    async { validateUrlUseCase.blockIP(id, data.ip!!) }
                 }
+
+                shortUrlRepository.findByKey(su.hash)!!
             } else {
                 throw InvalidUrlException(url)
             }

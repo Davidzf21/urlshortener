@@ -41,7 +41,8 @@ fun ShortUrlEntity.toDomain() = ShortUrl(
                 mode = mode
         ),
         created = created,
-        validation = validation,
+        blockInfo = blockInfo,
+        reachableInfo = reachableInfo,
         properties = ShortUrlProperties(
                 sponsor = sponsor,
                 owner = owner,
@@ -56,10 +57,11 @@ fun ShortUrlEntity.toDomain() = ShortUrl(
  */
 fun ShortUrl.toEntity() = ShortUrlEntity(
         hash = hash,
-        target = redirection.target,
-        mode = redirection.mode,
+        target = redirection!!.target,
+        mode = redirection!!.mode,
         created = created,
-        validation = validation,
+        blockInfo = blockInfo,
+        reachableInfo = reachableInfo,
         owner = properties.owner,
         sponsor = properties.sponsor,
         safe = properties.safe,
