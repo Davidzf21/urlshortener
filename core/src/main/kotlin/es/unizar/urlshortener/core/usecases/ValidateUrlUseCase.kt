@@ -1,21 +1,16 @@
 package es.unizar.urlshortener.core.usecases
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import es.unizar.urlshortener.core.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
-import org.springframework.http.HttpEntity
 import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.io.IOException
-import java.net.URI
-import java.nio.file.Paths
 import java.util.*
+
 
 /**
  * Dada una URL comprueba se es alcanzable y segura mediante la
@@ -25,7 +20,6 @@ import java.util.*
  */
 
 interface ValidateUrlUseCase {
-    suspend fun reachableURL(id: String, url: String)
     suspend fun blockURL(id: String, url: String)
     suspend fun blockIP(id: String, ipRemote: String)
 }
@@ -39,24 +33,6 @@ class ValidateUrlUseCaseImpl(
 
     @Autowired
     lateinit var restTemplate: RestTemplate
-
-    /*** Validacion de que la URL es alcanzable ***/
-    override suspend fun reachableURL(id: String, url: String) {
-        return try {
-            var resp = restTemplate.getForEntity(url, String::class.java)
-            if(resp.statusCode.is2xxSuccessful) {
-                shortUrlRepository.updateReachableInfo(id, ReachableUrlState.REACHABLE)
-            } else {
-                println("NOT REACHABLE")
-                shortUrlRepository.updateMode(id, 400)
-                shortUrlRepository.updateReachableInfo(id, ReachableUrlState.FAIL_NOT_REACHABLE)
-            }
-        } catch (e: Exception){
-            println("NOT REACHABLE")
-            shortUrlRepository.updateMode(id, 400)
-            shortUrlRepository.updateReachableInfo(id, ReachableUrlState.FAIL_NOT_REACHABLE)
-        }
-    }
 
     /*** Comprobar que la URL no esta en la lista de bloqueados ***/
     override suspend fun blockURL(id: String, url: String) {

@@ -49,6 +49,7 @@ project(":core") {
         "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
         "implementation"("com.fasterxml.jackson.module:jackson-module-kotlin")
         "implementation"("ru.chermenin:kotlin-user-agents:0.2.2")
+        "implementation"("org.springframework.amqp:spring-rabbit")
     }
     tasks.getByName<BootJar>("bootJar") {
         enabled = false
@@ -115,6 +116,7 @@ project(":app") {
         "implementation"( "org.webjars:bootstrap:$bootstrapVersion")
         "implementation"("org.webjars:jquery:$jqueryVersion")
         "implementation"("ru.chermenin:kotlin-user-agents:0.2.2")
+        "implementation"("org.springframework.amqp:spring-rabbit")
         "runtimeOnly"("org.hsqldb:hsqldb")
 
         "testImplementation"("org.springframework.boot:spring-boot-starter-test")

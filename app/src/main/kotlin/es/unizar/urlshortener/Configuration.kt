@@ -1,6 +1,7 @@
 package es.unizar.urlshortener
 
 import es.unizar.urlshortener.core.FileStore
+import es.unizar.urlshortener.core.rabbitmq.Receiver
 import es.unizar.urlshortener.core.usecases.*
 import es.unizar.urlshortener.infrastructure.delivery.HashServiceImpl
 import es.unizar.urlshortener.infrastructure.delivery.ValidatorServiceImpl
@@ -58,5 +59,8 @@ class ApplicationConfiguration(
 
     @Bean
     fun createUrlsFromCsvUseCase() = CreateUrlsFromCsvUseCaseImpl(createShortUrlUseCase())
+
+    @Bean
+    fun Receiver() = Receiver(shortUrlRepositoryService())
 
 }
