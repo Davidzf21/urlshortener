@@ -11,8 +11,6 @@ import javax.servlet.http.HttpServletRequest
 
 /**
  * Log that somebody has requested the redirection identified by a key.
- *
- * **Note**: This is an example of functionality.
  */
 interface LogClickUseCase {
     fun logClick(key: String, data: ClickProperties)

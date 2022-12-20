@@ -1,6 +1,7 @@
 package es.unizar.urlshortener.core.usecases
 
 import es.unizar.urlshortener.core.*
+import es.unizar.urlshortener.core.rabbitmq.Receiver
 import org.springframework.web.multipart.MultipartFile
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -51,6 +52,9 @@ class CreateUrlsFromCsvUseCaseImpl(
         return makeList(shortUrlsFile,fall)
     }
 
+    /**
+     * La función [checkTypeFile] sirve para comprobar que el fichero tiene un formato válido.
+     */
     private fun checkTypeFile(file: MultipartFile): Boolean {
         val nameSplitByPoint = file.originalFilename?.split(".")
         if (nameSplitByPoint == null || nameSplitByPoint[nameSplitByPoint.size-1] != "csv") {
@@ -59,21 +63,24 @@ class CreateUrlsFromCsvUseCaseImpl(
         return false
     }
 
+    /**
+     * La función [makeList] sirve para crear la lista de URLs acortadas.
+     */
     private fun makeList(it: ArrayList<ShortUrl>, fall: Boolean): ArrayList<String> {
         val newLines = ArrayList<String>()
         for(i in 0 until it.size){
             val originalURL = it[i].redirection?.target
             var shortURL = "Format Invalid"
-            if (it[i].hash != "Format Invalid") {
+            var error = "OK"
+            if (it[i].hash != "Format Invalid") { // Comprobación de formato válido 'http' o 'https'
                 shortURL = "http://localhost:8080/" + it[i].hash
             }
-            var error = "OK"
-            if (it[i].hash == "Format Invalid"){
+            else {
                 error = "ERROR: debe ser una URI http o https"
             }
             newLines.add("$originalURL;$shortURL;$error")
         }
-        if(fall){
+        if(fall){ // Comprobación de contenido de fichero válido
             newLines.add("FALLO DE FORMATO;NO SE HA PODIDO PROCESAR EL FICHERO")
         }
         return newLines

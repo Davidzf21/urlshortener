@@ -1,5 +1,6 @@
 package es.unizar.urlshortener.core
 
+import es.unizar.urlshortener.core.usecases.CreateUrlsFromCsvUseCase
 import org.springframework.core.io.Resource
 import org.springframework.core.io.UrlResource
 import org.springframework.stereotype.Service;
@@ -12,6 +13,10 @@ import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.readLines
 
+/**
+ * This interface [FileStore] is used for everything related
+ * to the files of the CSV functionality.
+ */
 interface FileStore {
     fun init()
     fun generateName(): String
@@ -21,6 +26,9 @@ interface FileStore {
     fun deleteAll()
 }
 
+/**
+ * Service of [FileStore].
+ */
 @Service
 class FileStorageImpl: FileStore {
     private var rootLocation = Paths.get("filestorage")

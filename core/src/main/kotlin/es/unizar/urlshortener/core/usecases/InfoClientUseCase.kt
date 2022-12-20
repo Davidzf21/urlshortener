@@ -5,10 +5,8 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle;
 
 /**
- * Given a key returns a [Redirection] that contains a [URI target][Redirection.target]
- * and an [HTTP redirection mode][Redirection.mode].
- *
- * **Note**: This is an example of functionality.
+ * Class [InfoClientUserCase] Given a hash of url, it returns the list of the information
+ * of all the times that have been clicked.
  */
 interface InfoClientUserCase {
     fun getInfo(key: String): ArrayList<InfoClientResponse>?

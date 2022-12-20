@@ -5,6 +5,9 @@ import es.unizar.urlshortener.core.ShortUrlRepositoryService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.client.RestTemplate
 
+/**
+ * Clase [Receiver] que sirve para procesar los mensajes de la cola.
+ */
 class Receiver (
         private val shortUrlRepository: ShortUrlRepositoryService
 ){
@@ -22,7 +25,7 @@ class Receiver (
     }
 
     /*** Validacion de que la URL es alcanzable ***/
-    fun reachableURL(id: String, url: String) {
+    private fun reachableURL(id: String, url: String) {
         try {
             var resp = restTemplate.getForEntity(url, String::class.java)
             if(resp.statusCode.is2xxSuccessful) {

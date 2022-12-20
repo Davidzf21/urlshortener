@@ -33,8 +33,8 @@ class ShortUrlEntity(
         val target: String,
         val sponsor: String?,
         val created: OffsetDateTime,
-        val blockInfo: BlockUrlState,
-        val reachableInfo: ReachableUrlState,
+        val blockInfo: BlockUrlState, //NEW
+        val reachableInfo: ReachableUrlState, //NEW
         val owner: String?,
         val mode: Int,
         val safe: Boolean,

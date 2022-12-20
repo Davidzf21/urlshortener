@@ -44,7 +44,7 @@ interface UrlShortenerController {
     /**
      * Devuelve información relevante sobre la URI acortada identificada por el parámetro id..
      *
-     * **Note**:
+     * **Note**: Delivery of use case [InfoClientUserCase].
      */
     fun infoner(id: String, request: HttpServletRequest): ArrayList<InfoClientResponse>?
 }

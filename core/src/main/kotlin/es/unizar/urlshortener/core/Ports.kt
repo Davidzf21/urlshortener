@@ -8,8 +8,8 @@ import es.unizar.urlshortener.core.*
 interface ClickRepositoryService {
     fun save(cl: Click): Click
     fun existHash(id: String): Boolean
-    fun editBrowser(id: String, data:String): Boolean
-    fun editSO(id: String, data:String): Boolean
+    fun editBrowser(id: String, data:String): Boolean //Nueva funcionalidad
+    fun editSO(id: String, data:String): Boolean //Nueva funcionalidad
     fun findByHash(id: String): List<Click>
 }
 
@@ -19,10 +19,10 @@ interface ClickRepositoryService {
 interface ShortUrlRepositoryService {
     fun findByKey(id: String): ShortUrl?
     fun save(su: ShortUrl): ShortUrl
-    fun updateBlockInfo(id: String, state: BlockUrlState)
-    fun updateReachableInfo(id: String, state: ReachableUrlState)
-    fun updateMode(id: String, mode: Int): Boolean
-    fun updateSafe(id: String, safe: Boolean): Boolean
+    fun updateBlockInfo(id: String, state: BlockUrlState) //Nueva funcionalidad
+    fun updateReachableInfo(id: String, state: ReachableUrlState) //Nueva funcionalidad
+    fun updateMode(id: String, mode: Int): Boolean //Nueva funcionalidad
+    fun updateSafe(id: String, safe: Boolean): Boolean //Nueva funcionalidad
     fun deleteByKey(id: String)
 }
 

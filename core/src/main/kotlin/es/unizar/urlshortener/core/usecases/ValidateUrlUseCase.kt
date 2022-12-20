@@ -13,10 +13,8 @@ import java.util.*
 
 
 /**
- * Dada una URL comprueba se es alcanzable y segura mediante la
- * herramienta de Google Safe Browse.
- *
- * **Note**: This is an example of functionality.
+ * Class [ValidateUrlUseCase] Given url, it checks that it is not on a
+ * blocked list and neither is the creator's ip
  */
 
 interface ValidateUrlUseCase {

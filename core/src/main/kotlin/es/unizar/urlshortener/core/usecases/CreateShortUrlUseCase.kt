@@ -7,12 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 
-
 /**
  * Given an url returns the key that is used to create a short URL.
  * When the url is created optional data may be added.
- *
- * **Note**: This is an example of functionality.
  */
 interface CreateShortUrlUseCase {
     fun create(url: String, data: ShortUrlProperties): ShortUrl
@@ -61,7 +58,7 @@ class CreateShortUrlUseCaseImpl(
                 println("[Application] Enviando el mensaje ...");
                 rabbitTemplate.convertAndSend(exchangeName, routingKey, "$id|$url");
 
-                /*** Enviar mensaje en la cola para Google Safe Browsing ***/
+                /*** Enviar mensaje en la cola para comprobar seguridad (Google Safe Browsing) ***/
                 applicationEventPublisher.publishEvent(GoogleEvent(this, su.hash, url))
 
                 /*** Validaciones de la URL con Corutinas ***/

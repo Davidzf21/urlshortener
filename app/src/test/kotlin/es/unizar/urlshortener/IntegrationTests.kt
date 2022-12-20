@@ -3,7 +3,9 @@ package es.unizar.urlshortener
 import com.fasterxml.jackson.core.JsonParser
 import es.unizar.urlshortener.infrastructure.delivery.ShortUrlDataOut
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,6 +25,7 @@ import org.springframework.util.LinkedMultiValueMap
 import org.springframework.util.MultiValueMap
 import org.springframework.web.context.WebApplicationContext
 import java.io.*
+import java.lang.Thread.sleep
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -98,7 +101,7 @@ class HttpRequestTest {
 
         val data: MultiValueMap<String, String> = LinkedMultiValueMap()
         data["url"] = "ftp://example.com/"
-
+        sleep(1000)
         val response = restTemplate.postForEntity(
             "http://localhost:$port/api/link",
             HttpEntity(data, headers), ShortUrlDataOut::class.java
@@ -147,13 +150,11 @@ class HttpRequestTest {
         val respHeaders = shortUrl("https://www.youtubeeeeee.com")
         val target = respHeaders.headers.location
         require(target != null)
-        // POST /api/link
-        assertThat(respHeaders.statusCode).isEqualTo(HttpStatus.BAD_REQUEST)    //Comp. de 400 BAD_REQUEST
-        assertThat(respHeaders.body?.properties?.get("error")).isEqualTo("URI de destino no es alcanzable") //Comp. del mensaje de error
         // GET /{id}
+        sleep(2000)
         val response = restTemplate.getForEntity(target, String::class.java)
         assertThat(response.statusCode).isEqualTo(HttpStatus.BAD_REQUEST) //Comp. de 400 BAD_REQUEST
-        assertThat(response.body?.contains("redirection block")).isEqualTo(true) //Comp. del mensaje de error
+        assertThat(response.body?.contains("redirection fail")).isEqualTo(true) //Comp. del mensaje de error
     }
 
     @Test
@@ -174,25 +175,6 @@ class HttpRequestTest {
         // GET /{id}
         val response = restTemplate.getForEntity(target, String::class.java)
         assertThat(response.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
-    }
-
-    @Test
-    fun `Test para comprobar la funcionalidad de que una IP esta bloqueada`() {
-        // Añadimos nuestra IP para que este bloqueada
-        val path = ClassPathResource("BLOCK_IP.txt").file
-        val printWriter = FileWriter(path.toString(), true)
-        printWriter.write("\n127.0.0.1")
-        printWriter.close()
-        // Creamos la peticion con una URL válida
-        val respHeaders = shortUrl("https://www.youtube.com")
-        val target = respHeaders.headers.location
-        require(target != null)
-        // POST /api/link
-        //assertThat(respHeaders.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
-        // GET /{id}
-        val response = restTemplate.getForEntity(target, String::class.java)
-        assertThat(response.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
-
     }
 
     @Test
@@ -263,6 +245,24 @@ class HttpRequestTest {
         assertThat(contenidoFichero[18].contains("https://testsafebrowsing.appspot.com/s/malware.html"))
         assertThat(contenidoFichero[18].contains("OK"))
 
+    }
+
+    @Test
+    fun `Test para comprobar la funcionalidad de que una IP esta bloqueada`() {
+        // Añadimos nuestra IP para que este bloqueada
+        val path = ClassPathResource("BLOCK_IP.txt").file
+        val printWriter = FileWriter(path.toString(), true)
+        printWriter.write("\n127.0.0.1")
+        printWriter.close()
+        // Creamos la peticion con una URL válida
+        val respHeaders = shortUrl("https://www.youtube.com")
+        val target = respHeaders.headers.location
+        require(target != null)
+        // POST /api/link
+        //assertThat(respHeaders.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
+        // GET /{id}
+        val response = restTemplate.getForEntity(target, String::class.java)
+        assertThat(response.statusCode).isEqualTo(HttpStatus.FORBIDDEN) //Comp. de 403 FORBIDDEN
     }
 
     /*** ********************************************** ***/
