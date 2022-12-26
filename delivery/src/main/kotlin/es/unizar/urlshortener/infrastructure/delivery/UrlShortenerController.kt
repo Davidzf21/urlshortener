@@ -115,7 +115,7 @@ class UrlShortenerControllerImpl(
             }
             when (it.blockInfo) {
                 BlockUrlState.FAIL_BLOCK_URL -> {
-                    errors = "URL de destino está bloquedad"
+                    errors = "URL de destino está bloqueada"
                     state = HttpStatus.FORBIDDEN
                 }
                 BlockUrlState.FAIL_BLOCK_IP -> {

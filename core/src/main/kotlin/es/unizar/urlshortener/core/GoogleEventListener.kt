@@ -47,7 +47,8 @@ class GoogleEventListener (
         val mapper = jacksonObjectMapper()
         val serializador = mapper.writeValueAsString(request)
         //https://testsafebrowsing.appspot.com/s/malware.html UNSAFE EXAMPLE
-        val httpResponse = restTemplate.postForObject(URI(googleUrl+googleValue), HttpEntity(serializador), ThreatMatchesFindResponseBody::class.java)
+        val httpResponse = restTemplate.postForObject(URI(googleUrl+googleValue), HttpEntity(serializador),
+                ThreatMatchesFindResponseBody::class.java)
         if(!httpResponse?.matches.isNullOrEmpty()){
             println("NOT SAFE")
             shortUrlRepository.updateMode(id, 403)

@@ -54,18 +54,18 @@ class CreateShortUrlUseCaseImpl(
                 )
                 shortUrlRepository.save(su)
 
+                /*** Validaciones de la URL con Corutinas ***/
+                CoroutineScope(Dispatchers.IO).launch() {
+                    async { validateUrlUseCase.blockURL(id, url) }
+                    async { validateUrlUseCase.blockIP(id, data.ip!!) }
+                }
+
                 /*** Enviar mensaje por RabbitMQ para comprobar la accesibilidad (Reachable) ***/
                 println("[Application] Enviando el mensaje ...");
                 rabbitTemplate.convertAndSend(exchangeName, routingKey, "$id|$url");
 
                 /*** Enviar mensaje en la cola para comprobar seguridad (Google Safe Browsing) ***/
                 applicationEventPublisher.publishEvent(GoogleEvent(this, su.hash, url))
-
-                /*** Validaciones de la URL con Corutinas ***/
-                CoroutineScope(Dispatchers.IO).launch() {
-                    async { validateUrlUseCase.blockURL(id, url) }
-                    async { validateUrlUseCase.blockIP(id, data.ip!!) }
-                }
 
                 shortUrlRepository.findByKey(su.hash)!!
             } else {
