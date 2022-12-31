@@ -90,6 +90,8 @@ project(":delivery") {
         "implementation"("org.springframework.boot:spring-boot-starter-thymeleaf:2.5.3")
         "implementation"("ru.chermenin:kotlin-user-agents:0.2.2")
 
+        "implementation"("org.springdoc:springdoc-openapi-ui:1.6.14")
+
         "implementation"("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
         "testImplementation"("org.springframework.boot:spring-boot-starter-test")
         "testImplementation"("org.mockito.kotlin:mockito-kotlin:$mockitoVersion")
