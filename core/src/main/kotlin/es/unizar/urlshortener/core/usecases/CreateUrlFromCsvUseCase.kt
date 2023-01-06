@@ -11,7 +11,7 @@ import java.io.InputStreamReader
  * and creates a new file with the short URL or the error occurred.
  */
 interface CreateUrlsFromCsvUseCase {
-    fun create(file: MultipartFile, remoteAddr: String): ArrayList<String>
+    fun create(file: MultipartFile, remoteAddr: String, urlServer: String): ArrayList<String>
 }
 
 /**
@@ -21,7 +21,7 @@ class CreateUrlsFromCsvUseCaseImpl(
         private val createShortUrlUseCase: CreateShortUrlUseCase
 ) : CreateUrlsFromCsvUseCase {
 
-    override fun create(file: MultipartFile, remoteAddr: String): ArrayList<String> {
+    override fun create(file: MultipartFile, remoteAddr: String, urlServer: String): ArrayList<String> {
         if(checkTypeFile(file)){
             throw InvalidFileType()
         }
@@ -49,7 +49,7 @@ class CreateUrlsFromCsvUseCaseImpl(
             }
             line = reader.readLine()
         }
-        return makeList(shortUrlsFile,fall)
+        return makeList(shortUrlsFile, fall, urlServer)
     }
 
     /**
@@ -66,14 +66,14 @@ class CreateUrlsFromCsvUseCaseImpl(
     /**
      * La función [makeList] sirve para crear la lista de URLs acortadas.
      */
-    private fun makeList(it: ArrayList<ShortUrl>, fall: Boolean): ArrayList<String> {
+    private fun makeList(it: ArrayList<ShortUrl>, fall: Boolean, urlServer: String): ArrayList<String> {
         val newLines = ArrayList<String>()
         for(i in 0 until it.size){
             val originalURL = it[i].redirection?.target
             var shortURL = "Format Invalid"
             var error = "OK"
             if (it[i].hash != "Format Invalid") { // Comprobación de formato válido 'http' o 'https'
-                shortURL = "http://localhost:8080/" + it[i].hash
+                shortURL = urlServer + it[i].hash
             }
             else {
                 error = "ERROR: debe ser una URI http o https"

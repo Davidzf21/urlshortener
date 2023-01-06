@@ -1,0 +1,10 @@
+https://www.netflix.com/es/;http://localhost:8080/cdc758cc;OK
+https://www.instant-gaming.com/es/;http://localhost:8080/fa9b2616;OK
+https://www.unizar.es/;http://localhost:8080/27338e97;OK
+https://www.yoooooutube.com/;http://localhost:8080/9daead2a;OK
+ftp://www.unizar.es/ ;Format Invalid;ERROR: debe ser una URI http o https
+https://www.reddit.com/;http://localhost:8080/5dcbe629;OK
+https://www.twitch.tv/;http://localhost:8080/d1294737;OK
+https://www.spotify.com/es/;http://localhost:8080/8cf016ae;OK
+s://www.spotify.com/es/;Format Invalid;ERROR: debe ser una URI http o https
+https://testsafebrowsing.appspot.com/s/malware.html;http://localhost:8080/b61e4f44;OK

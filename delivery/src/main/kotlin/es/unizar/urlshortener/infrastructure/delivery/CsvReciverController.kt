@@ -51,7 +51,9 @@ class CsvReciverControllerImpl(
     override fun processCsv(@RequestParam("file") file: MultipartFile, request: HttpServletRequest,
                            response: HttpServletResponse) {
 
-        createUrlFromCsvUseCase.create(file, request.remoteAddr).let {
+        val requestUrl = request.requestURL.toString()
+        val serverAddress = Regex("(https?://[^:/]+)(:\\d+)?/").find(requestUrl)?.value
+        createUrlFromCsvUseCase.create(file, request.remoteAddr, serverAddress.toString()).let {
             val nuevoNombre = "${fileStorage.generateName()}.csv"
             val fileGenerated = fileStorage.newFile(nuevoNombre)
             var clientFileName = file.originalFilename?.split(".")?.get(0)!!
