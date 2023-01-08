@@ -1,13 +1,12 @@
 package es.unizar.urlshortener.core.usecases
 
 import es.unizar.urlshortener.core.*
-import es.unizar.urlshortener.core.rabbitmq.Receiver
 import org.springframework.web.multipart.MultipartFile
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
 /**
- * Given a file creates a short URL for each url in the file
+ * Given a [file], [urlServer] that is url server, creates a short URL for each url in the file
  * and creates a new file with the short URL or the error occurred.
  */
 interface CreateUrlsFromCsvUseCase {

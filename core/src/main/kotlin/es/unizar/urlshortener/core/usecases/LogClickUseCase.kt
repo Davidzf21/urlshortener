@@ -34,12 +34,12 @@ class LogClickUseCaseImpl(
         clickRepository.save(cl)
     }
 
-    /** Persistencia del nombre del navegador desde donde se hace la peticion ***/
+    /** Persistencia del nombre del navegador [data] desde donde se hace la peticion de la url identificada como [id] ***/
     override suspend fun setBrowser(id: String, data: UserAgent) {
         clickRepository.editBrowser(id, data.toString().split("/")[2])
     }
 
-    /** Persistencia del nombre del SO desde donde se hace la peticion ***/
+    /** Persistencia del nombre del SO [data] desde donde se hace la peticion de la url identificada como [id] ***/
     override suspend fun setPlataform(id: String, data: UserAgent) {
         clickRepository.editSO(id, data.toString().split("/")[1])
     }

@@ -2,11 +2,9 @@ package es.unizar.urlshortener.infrastructure.repositories
 
 import es.unizar.urlshortener.core.*
 import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.transaction.annotation.Transactional
-import javax.persistence.LockModeType
 
 /**
  * Specification of the repository of [ShortUrlEntity].

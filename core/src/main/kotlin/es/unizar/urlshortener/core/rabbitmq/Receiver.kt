@@ -19,12 +19,13 @@ class Receiver (
         const val RECEIVE_METHOD_NAME = "receiveMessage"
     }
 
+    /** Funcion que recive un mensaje de la cola [message]. **/
     fun receiveMessage(message: String) {
         println("[Receiver] ha recibido el mensaje \"$message\"")
         reachableURL(message.split("|")[0], message.split("|")[1])
     }
 
-    /*** Validacion de que la URL es alcanzable ***/
+    /*** Validacion de que la URL es alcanzable dado el [id] es decir el hash y [url] que la identifica***/
     private fun reachableURL(id: String, url: String) {
         try {
             var resp = restTemplate.getForEntity(url, String::class.java)

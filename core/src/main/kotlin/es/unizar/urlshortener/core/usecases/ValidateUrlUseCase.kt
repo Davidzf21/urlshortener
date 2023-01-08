@@ -3,10 +3,7 @@ package es.unizar.urlshortener.core.usecases
 import es.unizar.urlshortener.core.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.springframework.amqp.rabbit.core.RabbitTemplate
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.io.ClassPathResource
-import org.springframework.web.client.RestTemplate
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -29,10 +26,7 @@ class ValidateUrlUseCaseImpl(
         private val shortUrlRepository: ShortUrlRepositoryService
 ) : ValidateUrlUseCase {
 
-    @Autowired
-    lateinit var restTemplate: RestTemplate
-
-    /*** Comprobar que la URL no esta en la lista de bloqueados ***/
+    /*** Comprobar que la [url] no esta en la lista de bloqueados ***/
     override suspend fun blockURL(id: String, url: String) {
         val path = ClassPathResource("BLOCK_URL.txt").file
         try {
@@ -54,7 +48,7 @@ class ValidateUrlUseCaseImpl(
         }
     }
 
-    /*** Comprobar que la IP del creador no esta en la lista de bloqueados ***/
+    /*** Comprobar que la [ipRemote] del creador no esta en la lista de bloqueados ***/
     override suspend fun blockIP(id: String, ipRemote: String) {
         val path = ClassPathResource("BLOCK_IP.txt").file
         try {

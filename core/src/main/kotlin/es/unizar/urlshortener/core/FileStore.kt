@@ -1,17 +1,14 @@
 package es.unizar.urlshortener.core
 
-import es.unizar.urlshortener.core.usecases.CreateUrlsFromCsvUseCase
 import org.springframework.core.io.Resource
 import org.springframework.core.io.UrlResource
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils
-import org.springframework.web.multipart.MultipartFile;
 import java.io.FileNotFoundException
 import java.io.PrintWriter
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.readLines
 
 /**
  * This interface [FileStore] is used for everything related

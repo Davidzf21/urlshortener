@@ -113,6 +113,7 @@ class HttpRequestTest {
         assertThat(JdbcTestUtils.countRowsInTable(jdbcTemplate, "click")).isEqualTo(0)
     }
 
+
     /*** TEST - NUEVAS FUNCIONALIDADES ***/
 
     @Test

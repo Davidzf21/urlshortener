@@ -29,11 +29,12 @@ class GoogleEventListener (
     @Value("\${google.API.value}")
     lateinit var googleValue: String
 
+    /** Recive le [event] de la cola de GoogleEvent **/
     override fun onApplicationEvent(event: GoogleEvent) {
         SafeURL(event.id, event.url)
     }
 
-    /*** Validacion de que la URL es segura con Google Safe Browse ***/
+    /*** Validacion de que la [url] es segura con Google Safe Browse ***/
     private fun SafeURL(id: String, url: String) {
         val request = ThreatMatchesFindRequestBody(
                 ClientInfo(googleClient, googleVersion),

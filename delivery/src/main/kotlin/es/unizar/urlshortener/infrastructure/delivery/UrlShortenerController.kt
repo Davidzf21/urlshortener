@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.OpenAPIDefinition
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.info.Info
-import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.boot.web.client.RestTemplateBuilder
@@ -26,8 +25,6 @@ import org.springframework.web.client.RestTemplate
 import ru.chermenin.ua.UserAgent
 import java.net.URI
 import java.util.*
-import io.swagger.v3.oas.annotations.parameters.RequestBody
-import io.swagger.v3.oas.models.examples.Example
 import javax.servlet.http.HttpServletRequest
 
 /**

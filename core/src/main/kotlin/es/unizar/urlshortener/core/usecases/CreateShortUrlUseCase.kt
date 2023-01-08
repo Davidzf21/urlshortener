@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 
 /**
- * Given an url returns the key that is used to create a short URL.
+ * Given an [url] returns the key that is used to create a short URL.
  * When the url is created optional data may be added.
  */
 interface CreateShortUrlUseCase {

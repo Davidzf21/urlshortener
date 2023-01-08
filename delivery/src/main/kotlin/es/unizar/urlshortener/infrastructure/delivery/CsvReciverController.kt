@@ -2,6 +2,10 @@ package es.unizar.urlshortener.infrastructure.delivery
 
 import es.unizar.urlshortener.core.FileStore
 import es.unizar.urlshortener.core.usecases.*
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.apache.tomcat.util.http.fileupload.IOUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
@@ -22,6 +26,9 @@ interface CsvReciverController {
      *
      * **Note**: Delivery of use cases [RedirectUseCase] and [LogClickUseCase].
      */
+    @Operation(summary = "Devuelve la pagina HTML estática para subir un documento .csv",
+            description = "Devuelve la pagina HTML estática para subir un documento .csv, si se sube un " +
+                    "fichero de un formato distinto, no lo procesa")
     fun uploadCsvPage(model: MutableMap<String, Any>): String
 
     /**
@@ -29,11 +36,17 @@ interface CsvReciverController {
      *
      * **Note**: Delivery of use case [CreateShortUrlUseCase].
      */
+    @Operation(summary = "Devuelve un fichero .csv con las urls acortadas",
+            description = "Dado un fichero .csv, devuekve un fichero check .csv con todas las urls acortadas e" +
+                    " indicando si una url esta en un formato erroneo",
+            parameters = [Parameter(name = "file", description = "Nombre del fichero subido",
+                    required = true, example = "Ejemplo.csv", schema = Schema(type = "string"))])
     fun processCsv(file: MultipartFile, request: HttpServletRequest,
                   response: HttpServletResponse)
 
 }
 
+@Tag(name = "CSV Endpoints", description = "Operations related to .csv files")
 @Controller
 class CsvReciverControllerImpl(
         val createUrlFromCsvUseCase: CreateUrlsFromCsvUseCase
@@ -65,7 +78,6 @@ class CsvReciverControllerImpl(
             IOUtils.copy(fileGenerated.inputStream, response.outputStream)
             response.outputStream.close()
             fileGenerated.inputStream.close()
-            //fileStorage.deleteFile(nuevoNombre)
         }
 
     }
